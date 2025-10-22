@@ -1,13 +1,14 @@
 {
   "name": "ghost-running-backend",
   "version": "1.0.0",
-  "description": "Backend del proyecto Ingesoft1 - API REST con Node.js, Express y Sequelize conectada a MySQL.",
+  "description": "Backend del proyecto GhostRunning - API REST con Node.js, Express y Sequelize conectada a MySQL.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"(Pendiente) Ejecutar pruebas unitarias\" && exit 0",
-    "sync-db": "node -e \"require('./config/db').sync()\""
+    "sync-db": "node -e \"require('./config/db').sync()\"",
+    "create-db": "node scripts/create-db.js"
   },
   "dependencies": {
     "axios": "^1.7.3",
