@@ -2,11 +2,11 @@
   "name": "ghost-running-backend",
   "version": "1.0.0",
   "description": "Backend del proyecto GhostRunning - API REST con Node.js, Express y Sequelize conectada a MySQL.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"(Pendiente) Ejecutar pruebas unitarias\" && exit 0",
+    "start": "ts-node src/index.ts",
+    "dev": "ts-node-dev src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "sync-db": "node -e \"require('./config/db').sync()\"",
     "create-db": "node scripts/create-db.js"
   },
@@ -17,12 +17,19 @@
     "express": "^4.21.2",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
-    "sequelize": "^6.37.7"
+    "reflect-metadata": "^0.2.2",
+    "sequelize": "^6.37.7",
+    "typeorm": "^0.3.27"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.9.1",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18.0.0"
   }
+  
 }
