@@ -6,7 +6,7 @@ export class User {
     @PrimaryGeneratedColumn() // Define clave primaria auto incremental
     id!: number;      // !: indica que le atributo no puede ser null
     // Definicion de atributos
-@Column({ unique: true })  // Evita duplicados en la base de datos      
+    @Column({ unique: true })  // Evita duplicados en la base de datos      
     username!: string;
     
     @Column({ unique: true })  
