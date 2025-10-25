@@ -1,0 +1,222 @@
+%%{init: {'theme': 'neutral', 'themeVariables': {
+  'primaryColor': '#E3F2FD',
+  'primaryTextColor': '#0D47A1',
+  'lineColor': '#1565C0',
+  'tertiaryColor': '#BBDEFB',
+  'fontSize': '11px',
+  'fontFamily': 'Inter, Roboto, sans-serif',
+  'edgeLabelBackground': '#FFFFFF'
+}}}%%
+flowchart LR
+
+%% ======= CLASES DE ESTILO =======
+classDef controlador fill:#BBDEFB,stroke:#1565C0,stroke-width:2px;
+classDef servicio fill:#C8E6C9,stroke:#388E3C,stroke-width:2px;
+classDef dominio fill:#FFF9C4,stroke:#FBC02D,stroke-width:2px;
+classDef repositorio fill:#E1BEE7,stroke:#8E24AA,stroke-width:2px;
+
+%% =================== AUTENTICACIÓN ===================
+subgraph AUTH["🔐 Autenticación"]
+
+    subgraph A1C["🟦 Controlador"]
+        A1["LoginScreen"]
+        A2["RegisterScreen"]
+        A3["AuthNavigator"]
+    end
+
+    subgraph A1S["🟩 Servicio"]
+        B1["AuthService"]
+        B2["OAuthService (Google/Facebook)"]
+        B3["TokenManager (JWT)"]
+    end
+
+    subgraph A1D["🟨 Dominio"]
+        C1["Usuario"]
+        C2["Credenciales"]
+    end
+
+    subgraph A1R["🟪 Repositorio"]
+        D1["UserRepository (SQLite)"]
+        D2["RemoteAuthAPI (Firebase Auth)"]
+    end
+
+    A1 --> B1
+    A2 --> B1
+    B1 --> B2
+    B1 --> B3
+    B1 --> C2
+    B1 --> C1
+    B1 --> D1
+    D1 --> D2
+    C2 --> C1
+    B3 --> D2
+
+end
+
+%% ======= ASIGNACIÓN DE CLASES AUTENTICACIÓN =======
+class A1,A2,A3 controlador;
+class B1,B2,B3 servicio;
+class C1,C2 dominio;
+class D1,D2 repositorio;
+
+%% =================== ENTRENAMIENTOS Y GPS ===================
+subgraph TRAIN["🏃 Entrenamientos y GPS"]
+
+    subgraph T1C["🟦 Controlador"]
+        T1["TrainingScreen"]
+        T2["MapScreen"]
+        T3["SummaryScreen"]
+    end
+
+    subgraph T1S["🟩 Servicio"]
+        TS1["TrackingService (GPS)"]
+        TS2["TrainingService (Gestrenamiento)"]
+        TS3["GhostService (Modo Fantasma)"]
+    end
+
+    subgraph T1D["🟨 Dominio"]
+        TD1["Entrenamiento"]
+        TD2["Ruta"]
+        TD3["PuntoGPS"]
+        TD4["Fantasma"]
+    end
+
+    subgraph T1R["🟪 Repositorio"]
+        TR1["TrainingRepository (SQLite)"]
+        TR2["GPSRepository (Ubicaciones)"]
+        TR3["CloudSyncRepository (Firebase / API REST)"]
+    end
+
+    T1 --> TS2
+    T2 --> TS1
+    T3 --> TS2
+    TS2 --> TS1
+    TS2 --> TD1
+    TS2 --> TR1
+    TS2 --> TR3
+    TS1 --> TD2
+    TS1 --> TD3
+    TS1 --> TR2
+    TS3 --> TD4
+    TS3 --> TS2
+    TR1 --> TR3
+
+end
+
+%% ======= ASIGNACIÓN DE CLASES ENTRENAMIENTOS Y GPS =======
+class T1,T2,T3 controlador;
+class TS1,TS2,TS3 servicio;
+class TD1,TD2,TD3,TD4 dominio;
+class TR1,TR2,TR3 repositorio;
+
+%% =================== PERFIL E HISTORIAL ===================
+subgraph PROF["👤 Perfil e Historial"]
+
+    subgraph P1C["🟦 Controlador"]
+        P1["ProfileScreen"]
+        P2["EditProfileScreen"]
+        P3["HistoryScreen"]
+    end
+
+    subgraph P1S["🟩 Servicio"]
+        PS1["UserProfileService"]
+    end
+
+    subgraph P1D["🟨 Dominio"]
+        PD1["Perfil"]
+    end
+
+    subgraph P1R["🟪 Repositorio"]
+        PR1["ProfileRepository (SQLite)"]
+        PR2["UserDataSyncRepository (Firebase / API REST)"]
+    end
+
+    P1 --> PS1
+    P2 --> PS1
+    P3 --> PS1
+    PS1 --> PD1
+    PS1 --> PR1
+    PR1 --> PR2
+
+end
+
+%% ======= ASIGNACIÓN DE CLASES PERFIL E HISTORIAL =======
+class P1,P2,P3 controlador;
+class PS1 servicio;
+class PD1 dominio;
+class PR1,PR2 repositorio;
+
+%% =================== NOTIFICACIONES Y RECORDATORIOS ===================
+subgraph NOTI["🔔 Notificaciones y Recordatorios"]
+
+    subgraph N1C["🟦 Controlador"]
+        N1["NotificationsScreen"]
+        N2["SettingsScreen"]
+    end
+
+    subgraph N1S["🟩 Servicio"]
+        NS1["NotificationService"]
+        NS2["ReminderService"]
+    end
+
+    subgraph N1D["🟨 Dominio"]
+        ND1["Notificacion"]
+        ND2["Recordatorio"]
+    end
+
+    subgraph N1R["🟪 Repositorio"]
+        NR1["NotificationRepository (AsyncStorage)"]
+        NR2["ReminderRepository (Firebase / Local DB)"]
+    end
+
+    N1 --> NS1
+    N2 --> NS2
+    NS1 --> ND1
+    NS2 --> ND2
+    NS1 --> NR1
+    NS2 --> NR2
+    NR1 --> NR2
+
+end
+
+%% ======= ASIGNACIÓN DE CLASES NOTIFICACIONES =======
+class N1,N2 controlador;
+class NS1,NS2 servicio;
+class ND1,ND2 dominio;
+class NR1,NR2 repositorio;
+
+%% =================== SERVICIOS EXTERNOS ===================
+subgraph EXT["🌐 Servicios Externos"]
+    E1["Google OAuth API"]
+    E2["Facebook Login API"]
+    E3["Firebase Auth API"]
+    E4["Expo Location API"]
+    E5["Google Maps SDK"]
+    E6["Firebase / Cloud Storage"]
+    E7["Expo Notifications API"]
+    E8["Firebase Cloud Messaging"]
+    E9["Android/iOS Scheduler"]
+end
+
+%% =================== RELACIONES ENTRE MÓDULOS ===================
+
+C1 --> TD1
+TD1 --> P3
+C1 --> PD1
+
+%% Notificaciones conectadas a Entrenamientos y Perfil
+TD1 --> NS1
+C1 --> NS2
+
+%% Conexiones externas
+B2 --> E1
+B2 --> E2
+B3 --> E3
+D2 --> E3
+TR3 --> E6
+TS1 --> E4
+T2 --> E5
+PR2 --> E6
+NS1 --> E7
+NS1 --> E8
+NS2 --> E9
