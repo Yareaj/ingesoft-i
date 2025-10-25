@@ -3,7 +3,7 @@ import "reflect-metadata"; // <-- ✅ CRÍTICO: DEBE SER LA PRIMERA LÍNEA
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { AppDataSource } from "./config/dataSource";
+import Database from "./db/Database";
 import { getFirstUser } from "./controller/UserController";
 
 
@@ -15,16 +15,16 @@ console.log(`DEBUG: DB_PASSWORD leída: [${process.env.DB_PASSWORD}]`);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Inicializar la Conexión a la Base de Datos
-AppDataSource.initialize()
+// Inicializar la Conexión a la Base de Datos usando el singleton Database
+Database.initialize()
     .then(() => {
-        console.log("✅ Conexión a la Base de Datos establecida con éxito.");
+        console.log("✅ Conexión a la Base de Datos establecida con éxito (singleton).");
 
         app.use(express.json());
-        
+
         // Ruta de la API para el tutorial "Hola Mundo"
         app.get("/api/hello-user", getFirstUser);
-        
+
         // Iniciar el Servidor
         app.listen(PORT, () => {
             console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);

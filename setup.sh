@@ -14,12 +14,12 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
-# --- 3. Cargar variables del archivo .env ---
-if [ -f ".env" ]; then
-    export $(grep -v '^#' .env | xargs)
-    echo "✅ Variables de entorno cargadas desde .env"
+# --- 3. Cargar variables del archivo .env (ubicado en Backend) ---
+if [ -f "Proyecto/Backend/.env" ]; then
+    export $(grep -v '^#' Proyecto/Backend/.env | xargs)
+    echo "✅ Variables de entorno cargadas desde Proyecto/Backend/.env"
 else
-    echo "⚠️ No se encontró el archivo .env en la raíz del proyecto."
+    echo "⚠️ No se encontró el archivo .env en Proyecto/Backend/"
 fi
 
 # --- 4. Instalar dependencias del Backend ---
@@ -32,18 +32,12 @@ echo "🗄️ Verificando o creando base de datos..."
 npm run create-db
 
 # --- 6. Volver a la raíz ---
-cd ..
+cd ../..
 
-# --- 7. Instalar dependencias del proyecto móvil (si existe) ---
-if [ -d "mobile-app" ]; then
-    echo "📱 Instalando dependencias del proyecto móvil..."
-    cd Proyecto/mobile-app
-    npm install
-    cd ..
-else
-    echo "ℹ️ No se encontró la carpeta mobile-app."
-    echo "💡 Puedes crearla más adelante con: npx create-expo-app mobile-app"
-fi
+# --- 7. Instalar dependencias del Frontend ---
+echo "📱 Instalando dependencias del Frontend..."
+cd Proyecto/Frontend/ghost-running-app || { echo "❌ No se encontró la carpeta del frontend."; exit 1; }
+npm install
 
 # --- 8. Levantar el servidor Backend ---
 echo "🚀 Levantando el servidor Backend..."
@@ -52,6 +46,4 @@ npm start
 
 echo "==============================================="
 echo "✅ Setup completado con éxito."
-echo "🌐 Backend corriendo en: http://localhost:3000"
-echo "📱 Cuando crees la app móvil, podrás ejecutarla con: cd mobile-app && npx expo start"
 echo "==============================================="
