@@ -1,6 +1,6 @@
 // src/controller/UserController.ts
 import { Request, Response } from 'express';
-import { AppDataSource } from '../config/dataSource'; // Importamos la conexión
+import Database from '../db/Database'; // Usamos el singleton Database
 import { User } from '../entity/User'; // Importamos la entidad
 
 /**
@@ -10,8 +10,8 @@ import { User } from '../entity/User'; // Importamos la entidad
  */
 export const getFirstUser = async (req: Request, res: Response) => {
     try {
-        // 1. Acceder al repositorio de la entidad User
-        const userRepository = AppDataSource.getRepository(User);
+    // 1. Acceder al repositorio de la entidad User a través del singleton
+    const userRepository = Database.getInstance().getRepository(User);
 
         // 2. Intentar buscar el primer registro con ID = 1
         let firstUser = await userRepository.findOne({ where: { id: 1 } });
