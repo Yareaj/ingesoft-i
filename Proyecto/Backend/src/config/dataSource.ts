@@ -1,23 +1,17 @@
-// src/config/dataSource.ts (Versión con HARDCODEO final)
-import "reflect-metadata"; 
 import { DataSource } from "typeorm";
-import { User } from "../entity/User"; 
+import { User } from "../entity/User";
+import dotenv from 'dotenv';
 
-// Usamos el puerto (5432) y host (localhost) directamente, ya que el .env podría fallar
-const dbPort = 5432; 
+dotenv.config();
 
 export const AppDataSource = new DataSource({
-    type: "postgres", 
-    host: "localhost",
-    port: dbPort, 
-    // FORZAMOS EL USUARIO Y LA CONTRASEÑA CORRECTOS
-    username: "postgres", 
-    password: "Werkzeuge_2357", 
-    database: "ghost_running_db", // El nombre de la BD que ya creaste
-    
-    entities: [User], 
-    synchronize: true, 
-    logging: false, 
-    migrations: [],
-    subscribers: [],
+    type: "postgres",
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    entities: [User],
+    synchronize: true,
+    logging: true
 });
