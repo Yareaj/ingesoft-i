@@ -1,5 +1,6 @@
 // src/controller/UserController.ts
-import { Request, Response } from 'express';
+import { Request, Response } from 'express'; // Tipos de objetos de Express para 
+                                             // manejar peticiones HTTP
 import Database from '../db/Database'; // Usamos el singleton Database
 import { User } from '../entity/User'; // Importamos la entidad
 
@@ -19,9 +20,9 @@ export const getFirstUser = async (req: Request, res: Response) => {
         // 3. Si no existe, lo insertamos (setup de demostración)
         if (!firstUser) {
             const newUser = userRepository.create({
-                username: "GhostRunner1",
-                email: "ghost@running.com",
-                password_hash: "hashed_password_demo" 
+                username: "Diego Cabrera",
+                email: "diegoghost@running.com",
+                password_hash: "ruunerporlaUN" 
             });
             await userRepository.save(newUser);
             firstUser = newUser;

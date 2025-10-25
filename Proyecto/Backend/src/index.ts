@@ -1,10 +1,12 @@
 // src/index.ts
+
 import "reflect-metadata"; // <-- ✅ CRÍTICO: DEBE SER LA PRIMERA LÍNEA
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import Database from "./db/Database";
 import { getFirstUser } from "./controller/UserController";
+
 
 
 // Cargar variables de entorno
@@ -20,9 +22,10 @@ Database.initialize()
     .then(() => {
         console.log("✅ Conexión a la Base de Datos establecida con éxito (singleton).");
 
-        app.use(express.json());
+        app.use(express.json());  // Middleware para parsear JSON
+        
+        // Ruta de prueba
 
-        // Ruta de la API para el tutorial "Hola Mundo"
         app.get("/api/hello-user", getFirstUser);
 
         // Iniciar el Servidor

@@ -1,18 +1,18 @@
-import { Client } from 'pg';
-import dotenv from 'dotenv';
+import { Client } from 'pg'; // importa cliente PosrgreSQL para conexión directa
+import dotenv from 'dotenv'; // Habilita variables de entorno
 
-dotenv.config();
+dotenv.config(); // Carga variables de entorno
 
 const createDatabase = async () => {
-    const client = new Client({
+    const client = new Client({   // Configura conexión inicial a PostgreSQL
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
         password: process.env.DB_PASSWORD,
         port: Number(process.env.DB_PORT)
     });
 
-    try {
-        await client.connect();
+    try { // Logica de verificación
+        await client.connect();  // Establece la conección 
         const dbName = process.env.DB_NAME;
 
         // Verificar si la base de datos existe
