@@ -2,7 +2,7 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "setup-db": "node scripts/create-db.js",
+    "setup-db": "npx ts-node scripts/create-db.ts",
     "build": "tsc"
   },
   "dependencies": {
@@ -15,7 +15,7 @@
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.2.41"
+    "typeorm": "^0.3.27"
   },
   "devDependencies": {
     "@types/pg": "^8.6.1",
