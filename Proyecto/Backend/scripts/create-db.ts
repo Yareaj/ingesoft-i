@@ -8,7 +8,8 @@ const createDatabase = async () => {
         user: process.env.DB_USER,
         host: process.env.DB_HOST,
         password: process.env.DB_PASSWORD,
-        port: Number(process.env.DB_PORT)
+        port: Number(process.env.DB_PORT),
+        database: process.env.DB_DEFAULT || 'postgres'
     });
 
     try { // Logica de verificación

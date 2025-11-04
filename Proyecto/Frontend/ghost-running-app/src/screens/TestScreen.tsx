@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 
 // --- AJUSTA ESTA IP SEGÚN TU ENTORNO (10.0.2.2 es para Emulador Android) ---
-const API_BASE_URL = 'http://192.168.5.102:3000'; 
+const API_BASE_URL = 'http://172.20.10.2:3000'; 
 
 interface UserData {
   id: number;
