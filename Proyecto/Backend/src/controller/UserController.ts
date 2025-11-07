@@ -1,40 +1,40 @@
-// src/controller/UserController.ts
-import { Request, Response } from 'express'; // Tipos de objetos de Express para 
-                                             // manejar peticiones HTTP
-import Database from '../db/Database'; // Usamos el singleton Database
-import { User } from '../entity/User'; // Importamos la entidad
+import { Request, Response } from 'express'; 
+import Database from '../db/Database'; 
+import { User } from '../entity/User'; 
 
 /**
- * Endpoint del tutorial "Hola Mundo".
- * Garantiza que existe un registro de usuario y lo devuelve,
- * demostrando la comunicación API -> Express -> TypeORM -> PostgreSQL.
+ * Endpoint de demostración: devuelve (o crea) el primer usuario registrado.
  */
+
 export const getFirstUser = async (req: Request, res: Response) => {
     try {
-    // 1. Acceder al repositorio de la entidad User a través del singleton
-    const userRepository = Database.getInstance().getRepository(User);
-
-        // 2. Intentar buscar el primer registro con ID = 1
-        let firstUser = await userRepository.findOne({ where: { id: 1 } });
         
-        // 3. Si no existe, lo insertamos (setup de demostración)
+        const userRepository = Database.getInstance().getRepository(User);
+
+        const users = await userRepository.find({ order: { registrationDate: "ASC" }, take: 1 });
+        let firstUser = users[0];
+
         if (!firstUser) {
             const newUser = userRepository.create({
-                username: "Diego Cabrera",
                 email: "diegoghost@running.com",
-                password_hash: "ruunerporlaUN" 
+                username: "Diego Cabrera",
+                password: "ruunerporlaUN",
+                names: "Diego",
+                lastNames: "Cabrera",
+                age: 30
             });
             await userRepository.save(newUser);
             firstUser = newUser;
         }
 
-        // 4. Devolver el registro de la BD
         res.status(200).json({
             message: "Hello World: User record fetched successfully",
             data: {
-                id: firstUser.id,
+                email: firstUser.email,
                 username: firstUser.username,
-                email: firstUser.email
+                names: firstUser.names,
+                lastNames: firstUser.lastNames,
+                registrationDate: firstUser.registrationDate
             }
         });
 

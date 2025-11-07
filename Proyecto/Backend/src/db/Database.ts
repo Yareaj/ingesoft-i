@@ -21,6 +21,14 @@ class Database {
     }
     return ds;
   }
+  static async close(): Promise<void> {
+    const ds = Database.getInstance();
+
+    if (ds && ds.isInitialized) {
+      await ds.destroy();
+      Database.instance = null;
+    }
+  }
 }
 
 export default Database;
