@@ -1,6 +1,4 @@
-// src/index.ts
-
-import "reflect-metadata"; // <-- ✅ CRÍTICO: DEBE SER LA PRIMERA LÍNEA
+import "reflect-metadata"; 
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
@@ -9,10 +7,8 @@ import { getFirstUser } from "./controller/UserController";
 
 
 
-// Cargar variables de entorno
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
-// ¡¡¡LÍNEA DE DEBUG!!!
-console.log(`DEBUG: DB_PASSWORD leída: [${process.env.DB_PASSWORD}]`);
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,8 +19,7 @@ Database.initialize()
         console.log("✅ Conexión a la Base de Datos establecida con éxito (singleton).");
 
         app.use(express.json());  // Middleware para parsear JSON
-        
-        // Ruta de prueba
+    
 
         app.get("/api/hello-user", getFirstUser);
 

@@ -1,148 +1,175 @@
-CREATE TABLE `User` (
-  `Email` varchar(100) PRIMARY KEY NOT NULL,
-  `Username` varchar(45) NOT NULL,
-  `Password` varchar(45) NOT NULL,
-  `Names` varchar(45) NOT NULL,
-  `LastNames` varchar(45) NOT NULL,
-  `Age` integer NOT NULL,
-  `ProfilePhoto` varchar(255),
-  `Description` text,
-  `RegistrationDate` datetime NOT NULL,
-  `Gender` enum(Male,Female,Other) NOT NULL
+-- PostgreSQL-compatible DDL converted from MySQL
+-- NOTE: This file assumes you are already connected to the target database.
+
+DROP TABLE IF EXISTS "Comments" CASCADE;
+DROP TABLE IF EXISTS "Route_has_Coordinate" CASCADE;
+DROP TABLE IF EXISTS "Kilometer" CASCADE;
+DROP TABLE IF EXISTS "Publication" CASCADE;
+DROP TABLE IF EXISTS "Training" CASCADE;
+DROP TABLE IF EXISTS "Followed" CASCADE;
+DROP TABLE IF EXISTS "User_has_MonthlyChallenge" CASCADE;
+DROP TABLE IF EXISTS "MonthlyChallenge" CASCADE;
+DROP TABLE IF EXISTS "Reto" CASCADE;
+DROP TABLE IF EXISTS "Coordinate" CASCADE;
+DROP TABLE IF EXISTS "Route" CASCADE;
+DROP TABLE IF EXISTS "WeeklyGoal" CASCADE;
+DROP TABLE IF EXISTS "PhysicalState" CASCADE;
+DROP TABLE IF EXISTS "UserGR" CASCADE;
+
+-- Tabla UserGR
+CREATE TABLE "UserGR" (
+  "email" VARCHAR(100) NOT NULL,
+  "username" VARCHAR(45) NOT NULL,
+  "password" VARCHAR(45) NOT NULL,
+  "names" VARCHAR(45) NOT NULL,
+  "lastNames" VARCHAR(45) NOT NULL,
+  "age" INT NOT NULL,
+  "profilePhoto" VARCHAR(255),
+  "description" TEXT,
+  "registrationDate" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "gender" VARCHAR(45),
+  PRIMARY KEY ("email")
 );
 
-CREATE TABLE `Route` (
-  `idRoute` int PRIMARY KEY NOT NULL,
-  `Distance` decimal(5,2) NOT NULL
+-- Tabla PhysicalState
+CREATE TABLE "PhysicalState" (
+  "userEmail" VARCHAR(100) NOT NULL,
+  "date" TIMESTAMP NOT NULL,
+  "height" DECIMAL(3,2) NOT NULL,
+  "weight" DECIMAL(5,2) NOT NULL,
+  PRIMARY KEY ("userEmail", "date")
 );
 
-CREATE TABLE `Training` (
-  `Id` int PRIMARY KEY NOT NULL,
-  `TimeDate` datetime NOT NULL,
-  `Duration` time NOT NULL,
-  `Rithm` decimal(4,2) NOT NULL,
-  `MaxSpeed` decimal(5,2) NOT NULL,
-  `AvgSpeed` decimal(5,2) NOT NULL,
-  `Calories` int NOT NULL,
-  `ElevationGain` decimal(5,2) NOT NULL,
-  `TrainingType` varchar(20) NOT NULL,
-  `User_Email` varchar(100) NOT NULL,
-  `Route_idRoute` int NOT NULL
+ALTER TABLE "PhysicalState" ADD CONSTRAINT fk_physicalstate_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla WeeklyGoal
+CREATE TABLE "WeeklyGoal" (
+  "userEmail" VARCHAR(100) NOT NULL,
+  "startDate" TIMESTAMP NOT NULL,
+  "trainingQuantity" INT NOT NULL,
+  "distance" DECIMAL(5,2) NOT NULL,
+  "completed" SMALLINT NOT NULL,
+  PRIMARY KEY ("userEmail", "startDate")
 );
 
-CREATE TABLE `Coordinate` (
-  `ID` varchar(45) PRIMARY KEY,
-  `Latitude` decimal NOT NULL,
-  `Longitude` decimal NOT NULL,
-  `Altitude` decimal NOT NULL
+ALTER TABLE "WeeklyGoal" ADD CONSTRAINT fk_weeklygoal_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Route
+CREATE TABLE "Route" (
+  "id" SERIAL PRIMARY KEY,
+  "distance" DECIMAL(5,2) NOT NULL
 );
 
-CREATE TABLE `Route_Coordinate` (
-  `Route_idRoute` int NOT NULL,
-  `Coordinate_ID` varchar(45) NOT NULL,
-  PRIMARY KEY (`Route_idRoute`, `Coordinate_ID`)
+-- Tabla Coordinate
+CREATE TABLE "Coordinate" (
+  "id" SERIAL PRIMARY KEY,
+  "latitude" REAL NOT NULL,
+  "longitude" REAL NOT NULL,
+  "altitude" REAL NOT NULL
 );
 
-CREATE TABLE `Running` (
-  `AvgStride` int NOT NULL,
-  `Training_Id` int PRIMARY KEY NOT NULL
+-- Tabla MonthlyChallenge
+CREATE TABLE "MonthlyChallenge" (
+  "id" SERIAL PRIMARY KEY,
+  "distance" DECIMAL(5,2) NOT NULL,
+  "startDate" DATE NOT NULL,
+  "endDate" DATE NOT NULL
 );
 
-CREATE TABLE `Cycling` (
-  `Training_Id` int PRIMARY KEY NOT NULL
+-- Tabla User_has_MonthlyChallenge
+CREATE TABLE "User_has_MonthlyChallenge" (
+  "monId" INT NOT NULL,
+  "userEmail" VARCHAR(100) NOT NULL,
+  PRIMARY KEY ("monId", "userEmail")
 );
 
-CREATE TABLE `KM` (
-  `Id` int PRIMARY KEY NOT NULL,
-  `Time` time NOT NULL,
-  `Training_Id` int NOT NULL
+ALTER TABLE "User_has_MonthlyChallenge" ADD CONSTRAINT fk_user_monthlychallenge_monthly FOREIGN KEY ("monId") REFERENCES "MonthlyChallenge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "User_has_MonthlyChallenge" ADD CONSTRAINT fk_user_monthlychallenge_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Route_has_Coordinate
+CREATE TABLE "Route_has_Coordinate" (
+  "routeId" INT NOT NULL,
+  "coordinateId" INT NOT NULL,
+  PRIMARY KEY ("routeId", "coordinateId")
 );
 
-CREATE TABLE `Publication` (
-  `Id` int PRIMARY KEY NOT NULL,
-  `Likes` int NOT NULL,
-  `RouteImage` varchar(255) NOT NULL,
-  `Privacity` enum(Public,Private,Only Followers) NOT NULL,
-  `User_Email` varchar(100) NOT NULL,
-  `TimeDate` datetime NOT NULL,
-  `Training_Id` int NOT NULL,
-  `Training_User_Email` varchar(100) NOT NULL
+ALTER TABLE "Route_has_Coordinate" ADD CONSTRAINT fk_route_has_coordinate_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Route_has_Coordinate" ADD CONSTRAINT fk_route_has_coordinate_coordinate FOREIGN KEY ("coordinateId") REFERENCES "Coordinate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Training
+CREATE TABLE "Training" (
+  "counter" SERIAL PRIMARY KEY,
+  "userEmail" VARCHAR(100) NOT NULL,
+  "routeId" INT NOT NULL,
+  "datetime" TIMESTAMP NOT NULL,
+  "duration" TIME NOT NULL,
+  "rithm" DECIMAL(4,2) NOT NULL,
+  "maxSpeed" DECIMAL(5,2) NOT NULL,
+  "avgSpeed" DECIMAL(5,2) NOT NULL,
+  "calories" DECIMAL(6,2) NOT NULL,
+  "elevationGain" DECIMAL(5,2) NOT NULL,
+  "trainingType" VARCHAR(10) NOT NULL CHECK ("trainingType" IN ('Running','Cycling')),
+  "isGhost" SMALLINT NOT NULL,
+  "avgStride" DECIMAL(5,2),
+  UNIQUE ("userEmail", "routeId", "counter")
 );
 
-CREATE TABLE `Followed` (
-  `User_Email` varchar(100) NOT NULL,
-  `User_Email1` varchar(100) NOT NULL,
-  PRIMARY KEY (`User_Email`, `User_Email1`)
+ALTER TABLE "Training" ADD CONSTRAINT fk_training_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Training" ADD CONSTRAINT fk_training_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Kilometer
+CREATE TABLE "Kilometer" (
+  "counter" SERIAL,
+  "time" TIME NOT NULL,
+  "routeId" INT NOT NULL,
+  "trainingCounter" INT NOT NULL,
+  "userEmail" VARCHAR(100) NOT NULL,
+  PRIMARY KEY ("counter", "routeId", "trainingCounter", "userEmail")
 );
 
-CREATE TABLE `MonthlyChallenge` (
-  `ID` int PRIMARY KEY NOT NULL,
-  `Distance` decimal(5,2) NOT NULL,
-  `StartDate` date NOT NULL,
-  `EndDate` date NOT NULL
+ALTER TABLE "Kilometer" ADD CONSTRAINT fk_kilometer_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Kilometer" ADD CONSTRAINT fk_kilometer_training FOREIGN KEY ("userEmail", "routeId", "trainingCounter") REFERENCES "Training"("userEmail", "routeId", "counter") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Publication
+CREATE TABLE "Publication" (
+  "counter" SERIAL,
+  "likes" INT NOT NULL,
+  "routeImage" VARCHAR(255),
+  "privacy" INT NOT NULL,
+  "datetime" TIMESTAMP NOT NULL,
+  "userEmail" VARCHAR(100) NOT NULL,
+  "trainingCounter" INT NOT NULL,
+  "routeId" INT NOT NULL,
+  PRIMARY KEY ("counter", "userEmail", "trainingCounter", "routeId")
 );
 
-CREATE TABLE `User_MonthlyChallenge` (
-  `MonthlyChallenge_ID` int NOT NULL,
-  `User_Email` varchar(100) NOT NULL,
-  PRIMARY KEY (`MonthlyChallenge_ID`, `User_Email`)
+ALTER TABLE "Publication" ADD CONSTRAINT fk_publication_training FOREIGN KEY ("userEmail", "routeId", "trainingCounter") REFERENCES "Training"("userEmail", "routeId", "counter") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Followed
+CREATE TABLE "Followed" (
+  "emailFollower" VARCHAR(100) NOT NULL,
+  "emailFollowed" VARCHAR(100) NOT NULL,
+  PRIMARY KEY ("emailFollower", "emailFollowed")
 );
 
-CREATE TABLE `PhysicalState` (
-  `Id` int PRIMARY KEY NOT NULL,
-  `DateSaved` timestamp NOT NULL,
-  `Weight` decimal NOT NULL,
-  `Heigh` decimal NOT NULL,
-  `User_Email` varchar(100) NOT NULL
+ALTER TABLE "Followed" ADD CONSTRAINT fk_followed_follower FOREIGN KEY ("emailFollower") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Followed" ADD CONSTRAINT fk_followed_followed FOREIGN KEY ("emailFollowed") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Tabla Comments (Comentarios de publicaciones)
+CREATE TABLE "Comments" (
+  "publicationCounter" INT NOT NULL,
+  "userEmail" VARCHAR(100) NOT NULL,
+  "trainingCounter" INT NOT NULL,
+  "routeId" INT NOT NULL,
+  "counter" SERIAL,
+  "text" TEXT NOT NULL,
+  "likes" INT NOT NULL DEFAULT 0,
+  "datetime" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY ("counter", "publicationCounter", "userEmail", "trainingCounter", "routeId")
 );
 
-CREATE TABLE `WeeklyGoal` (
-  `User_Email` varchar(100) PRIMARY KEY NOT NULL,
-  `TrainingQuantity` int NOT NULL,
-  `Distance` varchar(45) NOT NULL,
-  `Completed` tinyint NOT NULL,
-  `WeekStart` date NOT NULL
-);
+ALTER TABLE "Comments" ADD CONSTRAINT fk_comments_publication FOREIGN KEY ("publicationCounter", "userEmail", "trainingCounter", "routeId") 
+  REFERENCES "Publication"("counter", "userEmail", "trainingCounter", "routeId") 
+  ON DELETE CASCADE ON UPDATE CASCADE;
 
-CREATE TABLE `Comments` (
-  `Id` int PRIMARY KEY NOT NULL,
-  `Text` varchar(200) NOT NULL,
-  `Likes` int NOT NULL,
-  `Publication_User_Email` varchar(100) NOT NULL,
-  `Publication_Training_Id` int NOT NULL,
-  `Publication_Training_User_Email` varchar(100) NOT NULL
-);
 
-CREATE INDEX `Training_index_0` ON `Training` (`User_Email`);
-
-CREATE INDEX `Training_index_1` ON `Training` (`Route_idRoute`);
-
-ALTER TABLE `Training` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `Training` ADD FOREIGN KEY (`Route_idRoute`) REFERENCES `Route` (`idRoute`);
-
-ALTER TABLE `Route_Coordinate` ADD FOREIGN KEY (`Route_idRoute`) REFERENCES `Route` (`idRoute`);
-
-ALTER TABLE `Route_Coordinate` ADD FOREIGN KEY (`Coordinate_ID`) REFERENCES `Coordinate` (`ID`);
-
-ALTER TABLE `Running` ADD FOREIGN KEY (`Training_Id`) REFERENCES `Training` (`Id`);
-
-ALTER TABLE `Cycling` ADD FOREIGN KEY (`Training_Id`) REFERENCES `Training` (`Id`);
-
-ALTER TABLE `KM` ADD FOREIGN KEY (`Training_Id`) REFERENCES `Training` (`Id`);
-
-ALTER TABLE `Publication` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `Followed` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `Followed` ADD FOREIGN KEY (`User_Email1`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `User_MonthlyChallenge` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `PhysicalState` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `WeeklyGoal` ADD FOREIGN KEY (`User_Email`) REFERENCES `User` (`Email`);
-
-ALTER TABLE `User_MonthlyChallenge` ADD FOREIGN KEY (`MonthlyChallenge_ID`) REFERENCES `MonthlyChallenge` (`ID`);
-
-ALTER TABLE `Comments` ADD FOREIGN KEY (`Id`) REFERENCES `Publication` (`Id`);
