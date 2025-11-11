@@ -1,0 +1,46 @@
+import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
+
+export default defineConfig([
+	js.configs.recommended,
+	{
+        files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.ts", "**/*.tsx"],
+		rules: {
+			'array-bracket-spacing': [ 'error', 'always', { 'arraysInArrays': false, 'objectsInArrays': false, 'singleValue': false }],
+			'arrow-spacing': [ 'warn', { 'before': true, 'after': true }],
+			'brace-style': [ 'error', '1tbs', { 'allowSingleLine': true }],
+			'comma-dangle': [ 'warn', 'never' ],
+			'comma-spacing': [ 'warn', { 'before': false, 'after': true }],
+			'comma-style': [ 'error', 'last' ],
+			curly: 'error',
+			'dot-location': [ 'error', 'property' ],
+			indent: [ 'error', 'tab' ],
+			'keyword-spacing': 'error',
+			'max-nested-callbacks': [ 'error', { 'max': 4 }],
+			'no-console': 'off',
+			'no-empty-function': 'warn',
+			'no-floating-decimal': 'warn',
+			'no-inline-comments': 'error',
+			'no-lonely-if': 'error',
+			'no-multi-spaces': 'error',
+			'no-multiple-empty-lines': [ 'error', { 'max': 2, 'maxEOF': 0, 'maxBOF': 0 }],
+			'no-shadow': [ 'error', { 'allow': [ 'err', 'resolve', 'reject' ] }],
+			'no-trailing-spaces': 'error',
+			'no-var': 'error',
+			'object-curly-spacing': [ 'error', 'always', { 'arraysInObjects': true, 'objectsInObjects': false }],
+			'prefer-const': 'error',
+			quotes: 'off',
+			semi: [ 'error', 'always' ],
+			'space-before-blocks': 'error',
+			'space-before-function-paren': [ 'error', { 'anonymous': 'never', 'named': 'never', 'asyncArrow': 'always' }],
+			'space-in-parens': [ 'error', 'never' ],
+			'space-infix-ops': 'error',
+			'space-unary-ops': 'error',
+			'spaced-comment': [ 'error', 'always', { 'line': { 'exceptions': ['='] }}],
+			yoda: 'error'
+		},
+		languageOptions: {
+			sourceType: 'module'
+		}
+	}
+]);
