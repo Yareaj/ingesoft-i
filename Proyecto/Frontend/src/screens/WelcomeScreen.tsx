@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LoginScreen from './LoginScreen';
 import SignupScreen from './SignupScreen';
+import logo from '../../assets/logo.png';
 
 type Screen = 'welcome' | 'login' | 'signup';
 
@@ -20,34 +21,31 @@ const WelcomeScreen = () => {
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.content}>
-				<View style={styles.logoContainer}>
-					<Image
-						source={require('../../assets/logo.png')}
-						style={styles.logo}
-						resizeMode="cover"
-					/>
-				</View>
+				<Image
+					source={logo}
+					style={styles.logo}
+					resizeMode="cover"
+				/>
+			</View>
 
-				<Text style={styles.appName}>Ghost Running</Text>
+			<Text style={styles.appName}>Ghost Running</Text>
 
-				<View style={styles.spacer} />
+			<View style={styles.spacer} />
 
+			<View style={styles.buttonContainer}>
+				<TouchableOpacity
+					style={[styles.button, styles.loginButton]}
+					onPress={() => setCurrentScreen('login')}
+				>
+					<Text style={styles.buttonText}>Log In</Text>
+				</TouchableOpacity>
 
-				<View style={styles.buttonContainer}>
-					<TouchableOpacity
-						style={[styles.button, styles.loginButton]}
-						onPress={() => setCurrentScreen('login')}
-					>
-						<Text style={styles.buttonText}>Log In</Text>
-					</TouchableOpacity>
-
-					<TouchableOpacity
-						style={[styles.button, styles.signupButton]}
-						onPress={() => setCurrentScreen('signup')}
-					>
-						<Text style={styles.buttonText}>Sign Up</Text>
-					</TouchableOpacity>
-				</View>
+				<TouchableOpacity
+					style={[styles.button, styles.signupButton]}
+					onPress={() => setCurrentScreen('signup')}
+				>
+					<Text style={styles.buttonText}>Sign Up</Text>
+				</TouchableOpacity>
 			</View>
 		</SafeAreaView>
 	);
