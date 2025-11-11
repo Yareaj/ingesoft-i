@@ -4,7 +4,7 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
 	js.configs.recommended,
-    ...tseslint.configs.recommended,
+	...tseslint.configs.recommended,
 	{
 		files: [ "**/*.js", "**/*.cjs", "**/*.mjs", "**/*.ts", "**/*.tsx" ],
 		rules: {
