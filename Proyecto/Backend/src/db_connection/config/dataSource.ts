@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
 import dotenv from 'dotenv';
+import path from 'path';
 
 import { User } from "../entity/User";
 import { PhysicalState } from "../entity/PhysicalState";
@@ -12,7 +13,8 @@ import { Kilometer } from "../entity/Kilometer";
 import { Publication } from "../entity/Publication";
 import { Comment } from "../entity/Comment";
 
-dotenv.config();
+// Cargar .env desde raíz del proyecto (cuatro niveles arriba de src/db_connection/config/)
+dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -34,5 +36,5 @@ export const AppDataSource = new DataSource({
         Comment
     ],
     synchronize: false, // No sincronizar automáticamente el esquema
-    logging: true       // Registro de consultas
+    logging: false       // Registro de consultas
 });

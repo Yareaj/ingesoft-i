@@ -1,9 +1,10 @@
-import { Client } from 'pg'; // importa cliente PostgreSQL para conexión directa
-import dotenv from 'dotenv'; // Habilita variables de entorno
+import { Client } from 'pg';
+import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-dotenv.config(); // Carga variables de entorno
+// Cargar .env desde raíz del proyecto (dos niveles arriba: Proyecto/Database -> ingesoft-i)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const createDatabase = async () => {
     const dbName = process.env.DB_NAME as string;
@@ -44,7 +45,8 @@ const createDatabase = async () => {
         });
         await dbClient.connect();
 
-        const sqlScriptPath = path.join(__dirname, '../db/init.sql');
+        // init.sql está en db_schema/ dentro de Database/
+        const sqlScriptPath = path.join(__dirname, './db_schema/init.sql');
         const sqlScriptContent = readFileSync(sqlScriptPath, 'utf8');
 
         await dbClient.query(sqlScriptContent);

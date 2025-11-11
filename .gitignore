@@ -4,6 +4,9 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,visualstudiocode
 ### .env 
 .env
+### Node ###
+# Logs
+*.log
 /Proyecto/Backend/node_modules
 
 ### VisualStudioCode ###
