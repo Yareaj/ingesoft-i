@@ -6,26 +6,26 @@ import { User } from "./User";
 @Entity("Kilometer")
 export class Kilometer {
     @PrimaryColumn({ name: "counter" })
-    counter!: number;
+    	counter!: number;
 
     @Column({ name: "time", type: "time" })
-    time!: string;
+    	time!: string;
 
     @PrimaryColumn({ name: "routeId" })
-    routeId!: number;
+    	routeId!: number;
 
     @PrimaryColumn({ name: "trainingCounter" })
-    trainingCounter!: number;
+    	trainingCounter!: number;
 
     @PrimaryColumn({ name: "userEmail", length: 100 })
-    userEmail!: string;
+    	userEmail!: string;
 
     @ManyToOne(() => Route, route => route.kilometers)
-    route!: Route;
+    	route!: Route;
 
     @ManyToOne(() => Training, training => training.kilometers)
-    training!: Training;
+    	training!: Training;
 
     @ManyToOne(() => User)
-    user!: User;
+    	user!: User;
 }

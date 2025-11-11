@@ -4,17 +4,17 @@ import { User } from "./User";
 @Entity("PhysicalState")
 export class PhysicalState {
     @PrimaryColumn({ name: "userEmail", length: 100 })
-    userEmail!: string;
+    	userEmail!: string;
 
     @PrimaryColumn({ name: "date" })
-    date!: Date;
+    	date!: Date;
 
     @Column({ name: "height", type: "decimal", precision: 3, scale: 2 })
-    height!: number;
+    	height!: number;
 
     @Column({ name: "weight", type: "decimal", precision: 5, scale: 2 })
-    weight!: number;
+    	weight!: number;
 
     @ManyToOne(() => User, user => user.physicalStates)
-    user!: User;
+    	user!: User;
 }
