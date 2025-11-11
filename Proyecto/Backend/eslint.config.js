@@ -1,12 +1,14 @@
 import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
 	js.configs.recommended,
+    ...tseslint.configs.recommended,
 	{
-        files: ["**/*.js", "**/*.cjs", "**/*.mjs", "**/*.ts", "**/*.tsx"],
+		files: [ "**/*.js", "**/*.cjs", "**/*.mjs", "**/*.ts", "**/*.tsx" ],
 		rules: {
-			'array-bracket-spacing': [ 'error', 'always', { 'arraysInArrays': false, 'objectsInArrays': false, 'singleValue': false }],
+			// 'arraybracket-spacing': [ 'error', 'always', { 'arraysInArrays': false, 'objectsInArrays': false, 'singleValue': false }],
 			'arrow-spacing': [ 'warn', { 'before': true, 'after': true }],
 			'brace-style': [ 'error', '1tbs', { 'allowSingleLine': true }],
 			'comma-dangle': [ 'warn', 'never' ],
