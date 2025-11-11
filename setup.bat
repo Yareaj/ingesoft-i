@@ -22,17 +22,30 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-:: --- 3. Cargar variables del archivo .env (ubicado en Backend) ---
-if exist "Proyecto\Backend\.env" (
-    for /f "usebackq tokens=1,2 delims==" %%A in (`findstr /v "^#" "Proyecto\Backend\.env"`) do (
+:: --- 3. Cargar variables del archivo .env (ubicado en la raíz del proyecto) ---
+if exist ".env" (
+    for /f "usebackq tokens=1,2 delims==" %%A in (`findstr /v "^#" ".env"`) do (
         set %%A=%%B
     )
-    echo  Variables de entorno cargadas desde Proyecto\Backend\.env
+    echo  Variables de entorno cargadas desde .env
 ) else (
-    echo  No se encontro el archivo .env en Proyecto\Backend\
+    echo  No se encontro el archivo .env en la raiz del proyecto
 )
 
-:: --- 4. Instalar dependencias del Backend ---
+:: --- 4. Instalar dependencias de Database ---
+echo.
+echo  Instalando dependencias de Database...
+cd Proyecto\Database || (
+    echo  No se encontro la carpeta Proyecto\Database.
+    pause
+    exit /b
+)
+call npm install
+
+:: --- 5. Volver al directorio raíz ---
+cd ..\..
+
+:: --- 6. Instalar dependencias del Backend ---
 echo.
 echo  Instalando dependencias del Backend...
 cd Proyecto\Backend || (
@@ -42,18 +55,18 @@ cd Proyecto\Backend || (
 )
 call npm install
 
-:: --- 5. Crear la base de datos si no existe ---
+:: --- 7. Crear la base de datos si no existe ---
 echo.
 echo  Verificando o creando base de datos...
 call npm run setup-db
 
-:: --- 6. Volver al directorio raíz ---
+:: --- 8. Volver al directorio raíz ---
 cd ..\..
 
-:: --- 7. Instalar dependencias del Frontend ---
+:: --- 9. Instalar dependencias del Frontend ---
 echo.
 echo  Instalando dependencias del Frontend...
-cd Proyecto\Frontend\ghost-running-app || (
+cd Proyecto\Frontend || (
     echo  No se encontro la carpeta del frontend.
     pause
     exit /b
@@ -62,7 +75,7 @@ call npm install
 
 
 
-:: --- 8. Levantar el servidor Backend ---
+:: --- 10. Levantar el servidor Backend ---
 echo  Levantando el servidor Backend...
 :: ir al Backend usando la ruta absoluta basada en la ubicación del script
 cd /d "%~dp0Proyecto\Backend" || (

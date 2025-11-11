@@ -14,34 +14,42 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-# --- 3. Cargar variables del archivo .env (ubicado en Backend) ---
-if [ -f "Proyecto/Backend/.env" ]; then
-    export $(grep -v '^#' Proyecto/Backend/.env | xargs)
-    echo " Variables de entorno cargadas desde Proyecto/Backend/.env"
+# --- 3. Cargar variables del archivo .env (ubicado en la raíz del proyecto) ---
+if [ -f ".env" ]; then
+    export $(grep -v '^#' .env | xargs)
+    echo " Variables de entorno cargadas desde .env"
 else
-    echo " No se encontro el archivo .env en Proyecto/Backend/"
+    echo " No se encontro el archivo .env en la raiz del proyecto"
 fi
 
-# 4) Instalar dependencias del Backend
+# 4) Instalar dependencias de Database
+echo "Instalando dependencias de Database..."
+cd Proyecto/Database || { echo "No se encontro la carpeta Proyecto/Database."; exit 1; }
+npm install
+
+# 5) Volver a la raiz
+cd ../.. || true
+
+# 6) Instalar dependencias del Backend
 echo "Instalando dependencias del Backend..."
 cd Proyecto/Backend || { echo "No se encontro la carpeta Proyecto/Backend."; exit 1; }
 npm install
 
-# 5) Verificar o crear base de datos (ejecuta el script disponible)
+# 7) Verificar o crear base de datos (ejecuta el script disponible)
 echo "Verificando o creando base de datos..."
 npm run setup-db
 
-# 6) Volver a la raiz relativa del repo
+# 8) Volver a la raiz relativa del repo
 cd ../.. || true
 
-# 7) Instalar dependencias del Frontend
+# 9) Instalar dependencias del Frontend
 echo "Instalando dependencias del Frontend..."
-cd Proyecto/Frontend/ghost-running-app || { echo "No se encontro la carpeta del frontend."; exit 1; }
+cd Proyecto/Frontend || { echo "No se encontro la carpeta del frontend."; exit 1; }
 npm install
 
-# 8) Levantar el servidor Backend (bloqueante, como en el .bat)
+# 10) Levantar el servidor Backend (bloqueante, como en el .bat)
 echo "Levantando el servidor Backend..."
-cd ../../Backend || { echo "No se encontro la carpeta Backend."; exit 1; }
+cd ../Backend || { echo "No se encontro la carpeta Backend."; exit 1; }
 npm start
 
 echo "==============================================="
