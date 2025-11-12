@@ -5,29 +5,29 @@ import { Publication } from "./Publication";
 export class Comment {
 
     @PrimaryColumn({ name: "publicationCounter" })
-    publicationCounter!: number;
+    	publicationCounter!: number;
 
     @PrimaryColumn({ name: "userEmail", length: 100 })
-    userEmail!: string;
+    	userEmail!: string;
 
     @PrimaryColumn({ name: "trainingCounter" })
-    trainingCounter!: number;
+    	trainingCounter!: number;
 
     @PrimaryColumn({ name: "routeId" })
-    routeId!: number;
+    	routeId!: number;
 
     @PrimaryColumn({ name: "counter" })
-    counter!: number;
+    	counter!: number;
 
     @Column({ name: "text", type: "text" })
-    text!: string;
+    	text!: string;
 
     @Column({ name: "likes", default: 0 })
-    likes!: number;
+    	likes!: number;
 
     @CreateDateColumn({ name: "datetime" })
-    datetime!: Date;
+    	datetime!: Date;
 
     @ManyToOne(() => Publication, publication => publication.comments)
-    publication!: Publication;
+    	publication!: Publication;
 }

@@ -4,17 +4,17 @@ import { Route } from "./Route";
 @Entity("Coordinate")
 export class Coordinate {
     @PrimaryGeneratedColumn({ name: "id" })
-    id!: number;
+    	id!: number;
 
     @Column({ name: "latitude", type: "real" })
-    latitude!: number;
+    	latitude!: number;
 
     @Column({ name: "longitude", type: "real" })
-    longitude!: number;
+    	longitude!: number;
 
     @Column({ name: "altitude", type: "real" })
-    altitude!: number;
+    	altitude!: number;
 
     @ManyToMany(() => Route, route => route.coordinates)
-    routes!: Route[];
+    	routes!: Route[];
 }

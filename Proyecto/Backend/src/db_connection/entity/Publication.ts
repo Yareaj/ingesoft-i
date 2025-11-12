@@ -6,35 +6,35 @@ import { Comment } from "./Comment";
 @Entity("Publication")
 export class Publication {
     @PrimaryColumn({ name: "counter" })
-    counter!: number;
+    	counter!: number;
 
     @Column({ name: "likes" })
-    likes!: number;
+    	likes!: number;
 
     @Column({ name: "routeImage", length: 255, nullable: true })
-    routeImage?: string;
+    	routeImage?: string;
 
     @Column({ name: "privacy" })
-    privacy!: number;
+    	privacy!: number;
 
     @Column({ name: "datetime" })
-    datetime!: Date;
+    	datetime!: Date;
 
     @PrimaryColumn({ name: "userEmail", length: 100 })
-    userEmail!: string;
+    	userEmail!: string;
 
     @PrimaryColumn({ name: "trainingCounter" })
-    trainingCounter!: number;
+    	trainingCounter!: number;
 
     @PrimaryColumn({ name: "routeId" })
-    routeId!: number;
+    	routeId!: number;
 
     @ManyToOne(() => User, user => user.publications)
-    user!: User;
+    	user!: User;
 
     @ManyToOne(() => Training, training => training.publications)
-    training!: Training;
+    	training!: Training;
 
     @OneToMany(() => Comment, comment => comment.publication)
-    comments!: Comment[];
+    	comments!: Comment[];
 }
