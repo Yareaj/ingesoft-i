@@ -45,10 +45,20 @@ export const getFirstUser = async (req: Request, res: Response) => {
 };
 
 // Endpoint para registrar un nuevo usuario
-export const registerUser = async (req: Request, res: Response, ) => {
-    try {
-        console.log("Register User called with body:", req.body);
-    } catch (error) {
-        console.error("Error registering user:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }};
+export const registerUser = async (req: Request, res: Response) => {
+	try {
+		console.log("➡️  /api/register hit. Body:", req.body);
+
+		const { username, email, password } = req.body ?? {};
+		if (!username || !email || !password) {
+			console.warn("⚠️  Missing required fields in body", { username, email, passwordPresent: Boolean(password) });
+			return res.status(400).json({ message: "Faltan campos requeridos: username, email, password" });
+		}
+
+		// TODO: insertar en DB si aplica. Por ahora respondemos éxito.
+		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email } });
+	} catch (error) {
+		console.error("Error registering user:", error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+};

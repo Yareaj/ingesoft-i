@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import styles from '../styles/global-styles';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { apiUrl } from '../config/api';
 
 interface SignupScreenProps {
   onBack: () => void;
@@ -13,27 +14,29 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleSignup = async () => {
-    // Lógica de registro aquí
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Las contraseñas no contraseñean");
-      return;
-    }
-    //Llama a la API de registro en el backend (Que basicamente es un console log por ahora)
-    try {
-      const response = await fetch("http:10.203.164.235//:3000/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
+	const handleSignup = async () => {
+		if (password !== confirmPassword) {
+			Alert.alert("Error", "Las contraseñas no contraseñean");
+			return;
+		}
 
-      const data = await response.json();
-      Alert.alert("Respuesta del servidor", data.message);
-    } catch (error) {
-      console.error("Error en la solicitud:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor");
-    }
-  };
+		try {
+			const response = await fetch(apiUrl('/api/register'), {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, email, password })
+			});
+
+			const data = await response.json();
+			if (!response.ok) {
+				throw new Error(data?.message || `Error ${response.status}`);
+			}
+			Alert.alert("Respuesta del servidor", data.message || "Registro exitoso");
+		} catch (error) {
+			console.error("Error en la solicitud:", error);
+			Alert.alert("Error", "No se pudo conectar con el servidor");
+		}
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
