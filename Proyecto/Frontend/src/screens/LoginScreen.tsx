@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { theme } from '../config/designSystem';
+import GRButton from '../components/GRButton';
 
 interface LoginScreenProps {
   onBack: () => void;
@@ -40,13 +42,8 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 						secureTextEntry
 					/>
 
-					<TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-						<Text style={styles.loginButtonText}>Enter</Text>
-					</TouchableOpacity>
-
-					<TouchableOpacity style={styles.backButton} onPress={onBack}>
-						<Text style={styles.backButtonText}>Back</Text>
-					</TouchableOpacity>
+					<GRButton label="Enter" variant="primary" onPress={handleLogin} style={styles.buttonSpacing} />
+					<GRButton label="Back" variant="outline" onPress={onBack} style={styles.buttonSpacing} />
 				</View>
 			</View>
 		</SafeAreaView>
@@ -54,62 +51,22 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: '#000000'
-	},
-	content: {
-		flex: 1,
-		justifyContent: 'center',
-		paddingHorizontal: 30
-	},
-	title: {
-		fontSize: 32,
-		fontWeight: 'bold',
-		color: '#FFFFFF',
-		marginBottom: 40,
-		textAlign: 'center'
-	},
-	form: {
-		width: '100%'
-	},
+	container: { flex: 1, backgroundColor: theme.colors.background },
+	content: { flex: 1, justifyContent: 'center', paddingHorizontal: theme.spacing.xl + 10 },
+	title: { fontSize: 32, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: theme.spacing.xxl, textAlign: 'center' },
+	form: { width: '100%' },
 	input: {
-		backgroundColor: '#1A1A1A',
+		backgroundColor: theme.colors.surface,
 		borderWidth: 1,
-		borderColor: '#FF8C00',
-		borderRadius: 10,
-		paddingVertical: 15,
-		paddingHorizontal: 20,
-		marginBottom: 15,
-		color: '#FFFFFF',
-		fontSize: 16
+		borderColor: theme.colors.primary,
+		borderRadius: theme.radii.m,
+		paddingVertical: theme.spacing.l,
+		paddingHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.m,
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.l,
 	},
-	loginButton: {
-		backgroundColor: '#FF8C00',
-		paddingVertical: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginTop: 10
-	},
-	loginButtonText: {
-		color: '#FFFFFF',
-		fontSize: 18,
-		fontWeight: '600'
-	},
-	backButton: {
-		backgroundColor: 'transparent',
-		borderWidth: 2,
-		borderColor: '#FF8C00',
-		paddingVertical: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginTop: 15
-	},
-	backButtonText: {
-		color: '#FF8C00',
-		fontSize: 18,
-		fontWeight: '600'
-	}
+	buttonSpacing: { width: '100%', marginTop: theme.spacing.s },
 });
 
 export default LoginScreen;
