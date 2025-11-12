@@ -21,7 +21,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
     }
     //Llama a la API de registro en el backend (Que basicamente es un console log por ahora)
     try {
-      const response = await fetch("http://192.168.1.11:3000/api/register", {
+      const response = await fetch("http:10.203.164.235//:3000/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password }),
