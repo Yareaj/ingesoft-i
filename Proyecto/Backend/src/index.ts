@@ -1,28 +1,26 @@
-import "reflect-metadata"; 
+import "reflect-metadata";
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import Database from "./db_connection/db/Database";
-import { getFirstUser } from "./db_connection/controller/UserController";
+import { getFirstUser, registerUser } from "./db_connection/controller/UserController";
 
-// Cargar .env desde raíz del proyecto (tres niveles arriba de src/)
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Inicializar la Conexión a la Base de Datos usando el singleton Database
 Database.initialize()
     .then(() => {
         console.log("✅ Conexión a la Base de Datos establecida con éxito (singleton).");
-
+        
         app.use(express.json());  // Middleware para parsear JSON
-    
 
+        //Aqui definimos los endpoints
         app.get("/api/hello-user", getFirstUser);
 
-        // Iniciar el Servidor
+        app.post("/api/register", registerUser);
+
         app.listen(PORT, () => {
             console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);
             console.log(`Endpoint de prueba: http://localhost:${PORT}/api/hello-user`);

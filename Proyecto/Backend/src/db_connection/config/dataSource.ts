@@ -14,7 +14,7 @@ import { Publication } from "../entity/Publication";
 import { Comment } from "../entity/Comment";
 
 // Cargar .env desde raíz del proyecto (cuatro niveles arriba de src/db_connection/config/)
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
 export const AppDataSource = new DataSource({
     type: "postgres",
