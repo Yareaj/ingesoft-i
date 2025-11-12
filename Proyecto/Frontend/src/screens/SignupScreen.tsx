@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import styles from '../styles/global-styles';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface SignupScreenProps {
@@ -12,10 +13,27 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 
-	const handleSignup = () => {
-		// Lógica de registro aquí
-		console.log('Signup:', email, username, password);
-	};
+  const handleSignup = async () => {
+    // Lógica de registro aquí
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Las contraseñas no contraseñean");
+      return;
+    }
+    //Llama a la API de registro en el backend (Que basicamente es un console log por ahora)
+    try {
+      const response = await fetch("http://192.168.1.11:3000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+      Alert.alert("Respuesta del servidor", data.message);
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+      Alert.alert("Error", "No se pudo conectar con el servidor");
+    }
+  };
 
 	return (
 		<SafeAreaView style={styles.container}>
@@ -75,67 +93,5 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	);
 };
 
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: '#000000'
-	},
-	scrollContent: {
-		flexGrow: 1
-	},
-	content: {
-		flex: 1,
-		justifyContent: 'center',
-		paddingHorizontal: 30,
-		paddingVertical: 40
-	},
-	title: {
-		fontSize: 32,
-		fontWeight: 'bold',
-		color: '#FFFFFF',
-		marginBottom: 40,
-		textAlign: 'center'
-	},
-	form: {
-		width: '100%'
-	},
-	input: {
-		backgroundColor: '#1A1A1A',
-		borderWidth: 1,
-		borderColor: '#FF8C00',
-		borderRadius: 10,
-		paddingVertical: 15,
-		paddingHorizontal: 20,
-		marginBottom: 15,
-		color: '#FFFFFF',
-		fontSize: 16
-	},
-	signupButton: {
-		backgroundColor: '#FF8C00',
-		paddingVertical: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginTop: 10
-	},
-	signupButtonText: {
-		color: '#FFFFFF',
-		fontSize: 18,
-		fontWeight: '600'
-	},
-	backButton: {
-		backgroundColor: 'transparent',
-		borderWidth: 2,
-		borderColor: '#FF8C00',
-		paddingVertical: 15,
-		borderRadius: 10,
-		alignItems: 'center',
-		marginTop: 15
-	},
-	backButtonText: {
-		color: '#FF8C00',
-		fontSize: 18,
-		fontWeight: '600'
-	}
-});
 
 export default SignupScreen;
