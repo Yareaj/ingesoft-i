@@ -7,53 +7,53 @@ import { Publication } from "./Publication";
 @Entity("Training")
 export class Training {
     @PrimaryGeneratedColumn({ name: "counter" })
-    counter!: number;
+    	counter!: number;
 
     @Column({ name: "userEmail", length: 100 })
-    userEmail!: string;
+    	userEmail!: string;
 
     @Column({ name: "routeId" })
-    routeId!: number;
+    	routeId!: number;
 
     @Column({ name: "datetime" })
-    datetime!: Date;
+    	datetime!: Date;
 
     @Column({ name: "duration", type: "time" })
-    duration!: string;
+    	duration!: string;
 
     @Column({ name: "rithm", type: "decimal", precision: 4, scale: 2 })
-    rithm!: number;
+    	rithm!: number;
 
     @Column({ name: "maxSpeed", type: "decimal", precision: 5, scale: 2 })
-    maxSpeed!: number;
+    	maxSpeed!: number;
 
     @Column({ name: "avgSpeed", type: "decimal", precision: 5, scale: 2 })
-    avgSpeed!: number;
+    	avgSpeed!: number;
 
     @Column({ name: "calories", type: "decimal", precision: 6, scale: 2 })
-    calories!: number;
+    	calories!: number;
 
     @Column({ name: "elevationGain", type: "decimal", precision: 5, scale: 2 })
-    elevationGain!: number;
+    	elevationGain!: number;
 
     @Column({ name: "trainingType", length: 10 })
-    trainingType!: 'Running' | 'Cycling';
+    	trainingType!: 'Running' | 'Cycling';
 
     @Column({ name: "isGhost", type: "smallint" })
-    isGhost!: number;
+    	isGhost!: number;
 
     @Column({ name: "avgStride", type: "decimal", precision: 5, scale: 2, nullable: true })
-    avgStride?: number;
+    	avgStride?: number;
 
     @ManyToOne(() => User, user => user.trainings)
-    user!: User;
+    	user!: User;
 
     @ManyToOne(() => Route, route => route.trainings)
-    route!: Route;
+    	route!: Route;
 
     @OneToMany(() => Kilometer, kilometer => kilometer.training)
-    kilometers!: Kilometer[];
+    	kilometers!: Kilometer[];
 
     @OneToMany(() => Publication, publication => publication.training)
-    publications!: Publication[];
+    	publications!: Publication[];
 }
