@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { getFirstUser, registerUser } from "./db_connection/controller/UserController";
+import { getFirstUser, registerUser, loginUser } from "./db_connection/controller/UserController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -26,6 +26,8 @@ Database.initialize()
 
 		// Aqui definimos los endpoints
 		app.get("/api/hello-user", getFirstUser);
+		
+		app.post("/api/login", loginUser);
 		app.post("/api/register", registerUser);
 
 		app.listen(PORT, () => {

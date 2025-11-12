@@ -20,6 +20,8 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 			return;
 		}
 
+		console.log("Conectando a la IP:", apiUrl('/api/register'));
+
 		try {
 			const response = await fetch(apiUrl('/api/register'), {
 				method: "POST",
