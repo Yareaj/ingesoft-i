@@ -2,9 +2,11 @@ import "reflect-metadata";
 import express from "express";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import getLocalIP from "./db_connection/config/getLocalIp";
-import Database from "./db_connection/db/Database";
 import { getFirstUser, registerUser } from "./db_connection/controller/UserController";
+import Database from "./db_connection/db/Database";
+
+//modulo para obtener la ip local
+import getLocalIP from "./db_connection/config/getLocalIp";
 
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
