@@ -56,7 +56,7 @@ export const registerUser = async (req: Request, res: Response) => {
 		}
 
 		// TODO: insertar en DB si aplica. Por ahora respondemos éxito.
-		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email } });
+		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email }});
 	} catch (error) {
 		console.error("Error registering user:", error);
 		res.status(500).json({ message: "Internal server error" });
@@ -73,9 +73,10 @@ export const loginUser = async (req: Request, res: Response) => {
 			return res.status(400).json({ message: "Faltan campos requeridos: email, password" });
 		}
 
-		//TODO: Validar en DB si aplica. Por ahora respondemos éxito.
-		return res.status(200).json({ message: "Login exitoso", data: { email } });
+		// TODO: Validar en DB si aplica. Por ahora respondemos éxito.
+		return res.status(200).json({ message: "Login exitoso", data: { email }});
 	} catch (error) {
 		console.error("Error logging in user:", error);
 		res.status(500).json({ message: "Internal server error" });
-	}};
+	}
+};

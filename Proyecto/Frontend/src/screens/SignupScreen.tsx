@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import styles from '../styles/global-styles';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { theme } from '../config/designSystem';
+import { commonStyles } from '../config/commonStyles';
+import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
 
 interface SignupScreenProps {
@@ -41,14 +43,14 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	};
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<SafeAreaView style={commonStyles.container}>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
 				<View style={styles.content}>
-					<Text style={styles.title}>Sign Up</Text>
+					<Text style={commonStyles.title}>Sign Up</Text>
 
-					<View style={styles.form}>
+					<View style={commonStyles.form}>
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Email"
 							placeholderTextColor="#999"
 							value={email}
@@ -58,7 +60,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Username"
 							placeholderTextColor="#999"
 							value={username}
@@ -67,7 +69,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Password"
 							placeholderTextColor="#999"
 							value={password}
@@ -76,7 +78,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Confirm Password"
 							placeholderTextColor="#999"
 							value={confirmPassword}
@@ -84,13 +86,8 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 							secureTextEntry
 						/>
 
-						<TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-							<Text style={styles.signupButtonText}>Create Account</Text>
-						</TouchableOpacity>
-
-						<TouchableOpacity style={styles.backButton} onPress={onBack}>
-							<Text style={styles.backButtonText}>Back</Text>
-						</TouchableOpacity>
+						<GRButton label="Create Account" variant="primary" onPress={handleSignup} style={styles.buttonSpacing} />
+						<GRButton label="Back" variant="outline" onPress={onBack} style={styles.buttonSpacing} />
 					</View>
 				</View>
 			</ScrollView>
@@ -98,5 +95,10 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	);
 };
 
+const styles = StyleSheet.create({
+	scrollContent: { flexGrow: 1 },
+	content: { flex: 1, justifyContent: 'center', paddingHorizontal: theme.spacing.xl + 10, paddingVertical: theme.spacing.xl * 2 },
+	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
+});
 
 export default SignupScreen;

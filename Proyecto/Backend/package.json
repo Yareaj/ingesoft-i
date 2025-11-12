@@ -3,7 +3,9 @@
     "start": "ts-node src/index.ts",
     "dev": "nodemon --exec ts-node src/index.ts",
     "setup-db": "cd ../Database && npm run setup-db",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "@types/express": "^4.17.13",
@@ -19,10 +21,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/cors": "^2.8.17",
     "@types/pg": "^8.6.1",
     "@typescript-eslint/eslint-plugin": "^8.46.4",
     "@typescript-eslint/parser": "^8.46.4",
-    "@types/cors": "^2.8.17",
     "eslint": "^9.39.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.4.0",
