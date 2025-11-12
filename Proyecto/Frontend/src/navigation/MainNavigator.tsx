@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { theme } from '../config/designSystem';
 
 import HomeScreen from '../screens/HomeScreen';
 import FeedScreen from '../screens/FeedScreen';
@@ -18,15 +19,15 @@ export default function MainNavigator() {
 					screenOptions={{
 						headerShown: false,
 						tabBarStyle: {
-							backgroundColor: '#000000',
-							borderTopColor: '#1a1a1a',
+							backgroundColor: theme.colors.background,
+							borderTopColor: theme.colors.border,
 							borderTopWidth: 1,
 							height: Platform.OS === 'ios' ? 85 : 65,
 							paddingBottom: Platform.OS === 'ios' ? 25 : 10,
 							paddingTop: 8
 						},
-						tabBarActiveTintColor: '#FF6B00',
-						tabBarInactiveTintColor: '#888888',
+						tabBarActiveTintColor: theme.colors.primary,
+						tabBarInactiveTintColor: theme.colors.textSecondary,
 						tabBarLabelStyle: {
 							fontSize: 12,
 							fontWeight: 'bold'

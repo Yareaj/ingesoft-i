@@ -34,6 +34,5 @@
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.46.4"
   },
-  "private": true,
-  "type": "module"
+  "private": true
 }

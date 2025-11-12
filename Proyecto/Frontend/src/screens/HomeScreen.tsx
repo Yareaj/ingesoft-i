@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GRButton } from '../components/GRButton';
 import { theme } from '../config/designSystem';
+import { commonStyles } from '../config/commonStyles';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,7 +14,6 @@ interface HomeScreenProps {
 
 export default function HomeScreen({ userName = 'Runner', userImage }: HomeScreenProps) {
 	const [location, setLocation] = useState<Location.LocationObject | null>(null);
-	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
 	useEffect(() => {
@@ -26,7 +26,6 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 
 			if (status !== 'granted') {
 				setHasPermission(false);
-				setErrorMsg('Permission to access location was denied');
 				return;
 			}
 
@@ -47,8 +46,7 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 					setLocation(newLocation);
 				}
 			);
-		} catch (error) {
-			setErrorMsg('Error getting location');
+		} catch {
 			setHasPermission(false);
 		}
 	};
@@ -58,16 +56,16 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 	const handleTrainingHistory = () => Alert.alert('Training History', 'Opening training history...');
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+		<SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
 			{/* Header with user info */}
-			<View style={styles.header}>
+			<View style={commonStyles.header}>
 				<View style={styles.userInfoContainer}>
-					<View style={styles.profileImageContainer}>
+					<View style={styles.smallProfileImageContainer}>
 						{userImage ? (
-							<Image source={{ uri: userImage }} style={styles.profileImage} />
+							<Image source={{ uri: userImage }} style={commonStyles.profileImage} />
 						) : (
-							<View style={styles.profileImagePlaceholder}>
-								<Text style={styles.placeholderText}>
+							<View style={commonStyles.profileImagePlaceholder}>
+								<Text style={styles.smallPlaceholderText}>
 									{userName.charAt(0).toUpperCase()}
 								</Text>
 							</View>
@@ -126,20 +124,24 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: theme.colors.background },
-	header: { paddingHorizontal: theme.spacing.xl, paddingVertical: theme.spacing.l, backgroundColor: theme.colors.background },
 	userInfoContainer: {
 		flexDirection: 'row',
 		alignItems: 'center'
 	},
-	profileImageContainer: { width: 60, height: 60, borderRadius: 30, borderWidth: 3, borderColor: theme.colors.primary, padding: 2, marginRight: theme.spacing.l },
-	profileImage: {
-		width: '100%',
-		height: '100%',
-		borderRadius: 27
+	smallProfileImageContainer: {
+		width: 60,
+		height: 60,
+		borderRadius: 30,
+		borderWidth: 3,
+		borderColor: theme.colors.primary,
+		padding: 2,
+		marginRight: theme.spacing.l
 	},
-	profileImagePlaceholder: { width: '100%', height: '100%', borderRadius: 27, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center' },
-	placeholderText: { color: theme.colors.textPrimary, fontSize: theme.typography.size.xl, fontWeight: theme.typography.weight.bold },
+	smallPlaceholderText: {
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.xl,
+		fontWeight: theme.typography.weight.bold
+	},
 	welcomeText: { color: theme.colors.textPrimary, fontSize: theme.typography.size.xl, fontWeight: theme.typography.weight.bold, flex: 1 },
 	mapContainer: { flex: 1, margin: theme.spacing.l, borderRadius: theme.radii.l, overflow: 'hidden', backgroundColor: theme.colors.surface },
 	map: {

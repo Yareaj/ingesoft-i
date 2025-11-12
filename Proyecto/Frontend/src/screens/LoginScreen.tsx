@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
+import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 
 interface LoginScreenProps {
@@ -18,13 +19,13 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 	};
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<SafeAreaView style={commonStyles.container}>
 			<View style={styles.content}>
-				<Text style={styles.title}>Log In</Text>
+				<Text style={commonStyles.title}>Log In</Text>
 
-				<View style={styles.form}>
+				<View style={commonStyles.form}>
 					<TextInput
-						style={styles.input}
+						style={commonStyles.input}
 						placeholder="Email"
 						placeholderTextColor="#999"
 						value={email}
@@ -34,7 +35,7 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 					/>
 
 					<TextInput
-						style={styles.input}
+						style={commonStyles.input}
 						placeholder="Password"
 						placeholderTextColor="#999"
 						value={password}
@@ -51,21 +52,7 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: theme.colors.background },
 	content: { flex: 1, justifyContent: 'center', paddingHorizontal: theme.spacing.xl + 10 },
-	title: { fontSize: 32, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: theme.spacing.xxl, textAlign: 'center' },
-	form: { width: '100%' },
-	input: {
-		backgroundColor: theme.colors.surface,
-		borderWidth: 1,
-		borderColor: theme.colors.primary,
-		borderRadius: theme.radii.m,
-		paddingVertical: theme.spacing.l,
-		paddingHorizontal: theme.spacing.l,
-		marginBottom: theme.spacing.m,
-		color: theme.colors.textPrimary,
-		fontSize: theme.typography.size.l
-	},
 	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
 });
 

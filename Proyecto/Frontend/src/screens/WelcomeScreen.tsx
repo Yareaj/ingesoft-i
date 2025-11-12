@@ -5,6 +5,7 @@ import LoginScreen from './LoginScreen';
 import SignupScreen from './SignupScreen';
 import logo from '../../assets/logo.png';
 import { theme } from '../config/designSystem';
+import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 
 type Screen = 'welcome' | 'login' | 'signup';
@@ -21,7 +22,7 @@ const WelcomeScreen = () => {
 	}
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<SafeAreaView style={commonStyles.container}>
 			<View style={styles.content}>
 				<View style={styles.logoWrapper}>
 					<Image source={logo} style={styles.logo} resizeMode="cover" />
@@ -38,7 +39,6 @@ const WelcomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: theme.colors.background },
 	content: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: theme.spacing.xl + 10 },
 	logoWrapper: { width: 180, height: 180, borderRadius: 90, borderWidth: 5, borderColor: theme.colors.primary, overflow: 'hidden', marginBottom: theme.spacing.l, justifyContent: 'center', alignItems: 'center' },
 	logo: { width: '100%', height: '100%' },

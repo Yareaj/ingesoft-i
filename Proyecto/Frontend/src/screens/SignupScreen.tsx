@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import styles from '../styles/global-styles';
-import { View, Text, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, Alert, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
+import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
 
@@ -41,14 +41,14 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	};
 
 	return (
-		<SafeAreaView style={styles.container}>
+		<SafeAreaView style={commonStyles.container}>
 			<ScrollView contentContainerStyle={styles.scrollContent}>
 				<View style={styles.content}>
-					<Text style={styles.title}>Sign Up</Text>
+					<Text style={commonStyles.title}>Sign Up</Text>
 
-					<View style={styles.form}>
+					<View style={commonStyles.form}>
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Email"
 							placeholderTextColor="#999"
 							value={email}
@@ -58,7 +58,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Username"
 							placeholderTextColor="#999"
 							value={username}
@@ -67,7 +67,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Password"
 							placeholderTextColor="#999"
 							value={password}
@@ -76,7 +76,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<TextInput
-							style={styles.input}
+							style={commonStyles.input}
 							placeholder="Confirm Password"
 							placeholderTextColor="#999"
 							value={confirmPassword}
@@ -94,22 +94,8 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: theme.colors.background },
 	scrollContent: { flexGrow: 1 },
 	content: { flex: 1, justifyContent: 'center', paddingHorizontal: theme.spacing.xl + 10, paddingVertical: theme.spacing.xl * 2 },
-	title: { fontSize: 32, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: theme.spacing.xxl, textAlign: 'center' },
-	form: { width: '100%' },
-	input: {
-		backgroundColor: theme.colors.surface,
-		borderWidth: 1,
-		borderColor: theme.colors.primary,
-		borderRadius: theme.radii.m,
-		paddingVertical: theme.spacing.l,
-		paddingHorizontal: theme.spacing.l,
-		marginBottom: theme.spacing.m,
-		color: theme.colors.textPrimary,
-		fontSize: theme.typography.size.l
-	},
 	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
 });
 
