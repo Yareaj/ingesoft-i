@@ -26,7 +26,7 @@ Database.initialize()
 
 		// Aqui definimos los endpoints
 		app.get("/api/hello-user", getFirstUser);
-		
+
 		app.post("/api/login", loginUser);
 		app.post("/api/register", registerUser);
 
