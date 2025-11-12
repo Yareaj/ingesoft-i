@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView } from 'react-native';
+import styles from '../styles/global-styles';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
 import GRButton from '../components/GRButton';
@@ -14,10 +15,27 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 
-	const handleSignup = () => {
-		// Lógica de registro aquí
-		console.log('Signup:', email, username, password);
-	};
+  const handleSignup = async () => {
+    // Lógica de registro aquí
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Las contraseñas no contraseñean");
+      return;
+    }
+    //Llama a la API de registro en el backend (Que basicamente es un console log por ahora)
+    try {
+      const response = await fetch("http://192.168.1.11:3000/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await response.json();
+      Alert.alert("Respuesta del servidor", data.message);
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+      Alert.alert("Error", "No se pudo conectar con el servidor");
+    }
+  };
 
 	return (
 		<SafeAreaView style={styles.container}>
