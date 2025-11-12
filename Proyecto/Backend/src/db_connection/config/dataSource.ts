@@ -17,24 +17,27 @@ import { Comment } from "../entity/Comment";
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
 export const AppDataSource = new DataSource({
-    type: "postgres",
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT),
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    entities: [         // Registrar todas las entidades para que TypeORM las conozca
-        User,
-        PhysicalState,
-        WeeklyGoal,
-        Route,
-        Coordinate,
-        MonthlyChallenge,
-        Training,
-        Kilometer,
-        Publication,
-        Comment
-    ],
-    synchronize: false, // No sincronizar automáticamente el esquema
-    logging: false       // Registro de consultas
+	type: "postgres",
+	host: process.env.DB_HOST,
+	port: Number(process.env.DB_PORT),
+	username: process.env.DB_USER,
+	password: process.env.DB_PASSWORD,
+	database: process.env.DB_NAME,
+	// Registrar todas las entidades para que TypeORM las conozca
+	entities: [
+		User,
+		PhysicalState,
+		WeeklyGoal,
+		Route,
+		Coordinate,
+		MonthlyChallenge,
+		Training,
+		Kilometer,
+		Publication,
+		Comment
+	],
+	// No sincronizar automáticamente el esquema
+	synchronize: false,
+	// Registro de consultas
+	logging: false
 });

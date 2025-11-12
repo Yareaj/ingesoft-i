@@ -7,28 +7,28 @@ import { Kilometer } from "./Kilometer";
 export class Route {
 
     @PrimaryGeneratedColumn({ name: "id" })
-    id!: number;
+    	id!: number;
 
     @Column({ name: "distance", type: "decimal", precision: 5, scale: 2 })
-    distance!: number;
+    	distance!: number;
 
     @ManyToMany(() => Coordinate)
     @JoinTable({
-        name: "Route_has_Coordinate",
-        joinColumn: {
-            name: "routeId",
-            referencedColumnName: "id"
-        },
-        inverseJoinColumn: {
-            name: "coordinateId",
-            referencedColumnName: "id"
-        }
+    	name: "Route_has_Coordinate",
+    	joinColumn: {
+    		name: "routeId",
+    		referencedColumnName: "id"
+    	},
+    	inverseJoinColumn: {
+    		name: "coordinateId",
+    		referencedColumnName: "id"
+    	}
     })
-    coordinates!: Coordinate[];
+    	coordinates!: Coordinate[];
 
     @OneToMany(() => Training, training => training.route)
-    trainings!: Training[];
+    	trainings!: Training[];
 
     @OneToMany(() => Kilometer, kilometer => kilometer.route)
-    kilometers!: Kilometer[];
+    	kilometers!: Kilometer[];
 }
