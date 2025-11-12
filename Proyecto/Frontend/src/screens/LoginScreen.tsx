@@ -64,9 +64,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: theme.spacing.l,
 		marginBottom: theme.spacing.m,
 		color: theme.colors.textPrimary,
-		fontSize: theme.typography.size.l,
+		fontSize: theme.typography.size.l
 	},
-	buttonSpacing: { width: '100%', marginTop: theme.spacing.s },
+	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
 });
 
 export default LoginScreen;

@@ -56,7 +56,7 @@ export const registerUser = async (req: Request, res: Response) => {
 		}
 
 		// TODO: insertar en DB si aplica. Por ahora respondemos éxito.
-		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email } });
+		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email }});
 	} catch (error) {
 		console.error("Error registering user:", error);
 		res.status(500).json({ message: "Internal server error" });

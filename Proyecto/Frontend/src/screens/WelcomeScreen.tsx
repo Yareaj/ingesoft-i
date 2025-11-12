@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
 	appName: { fontSize: 32, fontWeight: '700', color: theme.colors.textPrimary, marginBottom: theme.spacing.l, letterSpacing: 1, textAlign: 'center' },
 	spacer: { flex: 0.2 },
 	buttonContainer: { width: '100%', gap: theme.spacing.m },
-	fullWidthButton: { width: '100%' },
+	fullWidthButton: { width: '100%' }
 });
 
 export default WelcomeScreen;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from '../styles/global-styles';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
 import GRButton from '../components/GRButton';
@@ -108,9 +108,9 @@ const styles = StyleSheet.create({
 		paddingHorizontal: theme.spacing.l,
 		marginBottom: theme.spacing.m,
 		color: theme.colors.textPrimary,
-		fontSize: theme.typography.size.l,
+		fontSize: theme.typography.size.l
 	},
-	buttonSpacing: { width: '100%', marginTop: theme.spacing.s },
+	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
 });
 
 export default SignupScreen;

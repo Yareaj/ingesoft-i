@@ -11,66 +11,67 @@ interface GRButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
-  leftIcon?: string; // simple emoji for now
+  // simple emoji for now
+  leftIcon?: string;
 }
 
 export const GRButton: React.FC<GRButtonProps> = ({
-  label,
-  onPress,
-  variant = 'primary',
-  disabled = false,
-  loading = false,
-  style,
-  leftIcon,
+	label,
+	onPress,
+	variant = 'primary',
+	disabled = false,
+	loading = false,
+	style,
+	leftIcon
 }) => {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled || loading}
-      style={[styles.base, styles[variant], disabled && styles.disabled, style]}
-      activeOpacity={0.85}
-    >
-      {loading ? (
-        <ActivityIndicator color={variant === 'outline' ? theme.colors.primary : theme.colors.textPrimary} />
-      ) : (
-        <Text style={[styles.label, variant === 'outline' && styles.labelOutline]}> {leftIcon ? leftIcon + ' ' : ''}{label}</Text>
-      )}
-    </TouchableOpacity>
-  );
+	return (
+		<TouchableOpacity
+			onPress={onPress}
+			disabled={disabled || loading}
+			style={[styles.base, styles[variant], disabled && styles.disabled, style]}
+			activeOpacity={0.85}
+		>
+			{loading ? (
+				<ActivityIndicator color={variant === 'outline' ? theme.colors.primary : theme.colors.textPrimary} />
+			) : (
+				<Text style={[styles.label, variant === 'outline' && styles.labelOutline]}> {leftIcon ? leftIcon + ' ' : ''}{label}</Text>
+			)}
+		</TouchableOpacity>
+	);
 };
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: theme.radii.m,
-    paddingVertical: theme.spacing.m + 3,
-    paddingHorizontal: theme.spacing.l,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: {
-    color: theme.colors.textPrimary,
-    fontSize: theme.typography.size.l,
-    fontWeight: '700',
-  },
-  labelOutline: {
-    color: theme.colors.primary,
-  },
-  primary: {
-    backgroundColor: theme.colors.primary,
-  },
-  secondary: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-  },
-  disabled: {
-    opacity: 0.5,
-  },
+	base: {
+		borderRadius: theme.radii.m,
+		paddingVertical: theme.spacing.m + 3,
+		paddingHorizontal: theme.spacing.l,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	label: {
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.l,
+		fontWeight: '700'
+	},
+	labelOutline: {
+		color: theme.colors.primary
+	},
+	primary: {
+		backgroundColor: theme.colors.primary
+	},
+	secondary: {
+		backgroundColor: theme.colors.surface,
+		borderWidth: 2,
+		borderColor: theme.colors.primary
+	},
+	outline: {
+		backgroundColor: 'transparent',
+		borderWidth: 2,
+		borderColor: theme.colors.primary
+	},
+	disabled: {
+		opacity: 0.5
+	}
 });
 
 export default GRButton;
