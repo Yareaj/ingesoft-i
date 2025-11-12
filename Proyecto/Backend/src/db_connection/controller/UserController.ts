@@ -43,3 +43,12 @@ export const getFirstUser = async (req: Request, res: Response) => {
 		res.status(500).json({ message: "Internal server error" });
 	}
 };
+
+// Endpoint para registrar un nuevo usuario
+export const registerUser = async (req: Request, res: Response, ) => {
+    try {
+        console.log("Register User called with body:", req.body);
+    } catch (error) {
+        console.error("Error registering user:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }};
