@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
+import { apiUrl } from '../config/api';
 
 interface LoginScreenProps {
   onBack: () => void;
@@ -13,9 +14,23 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 
-	const handleLogin = () => {
+	const handleLogin = async () => {
 		// Lógica de login aquí
-		console.log('Login:', email, password);
+		try {
+			const response = await fetch(apiUrl('/api/login'), {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({email, password })
+			});
+			const data = await response.json();
+			if (!response.ok) {
+				throw new Error(data?.message || `Error ${response.status}`);
+			}
+			Alert.alert("Respuesta del servidor", data.message || "Registro exitoso");
+		} catch (error) {
+			console.error("Error en la solicitud:", error);
+			Alert.alert("Error", "No se pudo conectar con el servidor");
+		}
 	};
 
 	return (

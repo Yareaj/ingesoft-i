@@ -62,3 +62,20 @@ export const registerUser = async (req: Request, res: Response) => {
 		res.status(500).json({ message: "Internal server error" });
 	}
 };
+
+// Endpoint para login de usuario
+export const loginUser = async (req: Request, res: Response) => {
+	try {
+		console.log("➡️  /api/login hit. Body:", req.body);
+		const { email, password } = req.body ?? {};
+		if (!email || !password) {
+			console.warn("⚠️  Missing required fields in query", { email, passwordPresent: Boolean(password) });
+			return res.status(400).json({ message: "Faltan campos requeridos: email, password" });
+		}
+
+		//TODO: Validar en DB si aplica. Por ahora respondemos éxito.
+		return res.status(200).json({ message: "Login exitoso", data: { email } });
+	} catch (error) {
+		console.error("Error logging in user:", error);
+		res.status(500).json({ message: "Internal server error" });
+	}};
