@@ -6,6 +6,7 @@ import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 interface HomeScreenProps {
   userName?: string;
@@ -13,6 +14,7 @@ interface HomeScreenProps {
 }
 
 export default function HomeScreen({ userName = 'Runner', userImage }: HomeScreenProps) {
+	const navigation = useNavigation();
 	const [location, setLocation] = useState<Location.LocationObject | null>(null);
 	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
@@ -51,7 +53,9 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 		}
 	};
 
-	const handleNewTraining = () => Alert.alert('New Training', 'Starting new training session...');
+	const handleNewTraining = () => {
+		navigation.navigate('Training' as never);
+	};
 	const handleSavedRoutes = () => Alert.alert('Saved Routes', 'Opening saved routes...');
 	const handleTrainingHistory = () => Alert.alert('Training History', 'Opening training history...');
 

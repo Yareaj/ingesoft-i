@@ -10,11 +10,15 @@ import GRButton from '../components/GRButton';
 
 type Screen = 'welcome' | 'login' | 'signup';
 
-const WelcomeScreen = () => {
+interface WelcomeScreenProps {
+	onLoginSuccess: () => void;
+}
+
+const WelcomeScreen = ({ onLoginSuccess }: WelcomeScreenProps) => {
 	const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
 
 	if (currentScreen === 'login') {
-		return <LoginScreen onBack={() => setCurrentScreen('welcome')} />;
+		return <LoginScreen onBack={() => setCurrentScreen('welcome')} onLoginSuccess={onLoginSuccess} />;
 	}
 
 	if (currentScreen === 'signup') {

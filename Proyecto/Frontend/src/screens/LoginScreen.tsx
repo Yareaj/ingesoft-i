@@ -7,10 +7,11 @@ import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
 
 interface LoginScreenProps {
-  onBack: () => void;
+	onBack: () => void;
+	onLoginSuccess: () => void;
 }
 
-const LoginScreen = ({ onBack }: LoginScreenProps) => {
+const LoginScreen = ({ onBack, onLoginSuccess }: LoginScreenProps) => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -26,10 +27,12 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 			if (!response.ok) {
 				throw new Error(data?.message || `Error ${response.status}`);
 			}
-			Alert.alert("Respuesta del servidor", data.message || "Registro exitoso");
+			Alert.alert("Success", data.message || "Login successful");
+			// Navigate to main app
+			onLoginSuccess();
 		} catch (error) {
-			console.error("Error en la solicitud:", error);
-			Alert.alert("Error", "No se pudo conectar con el servidor");
+			console.error("Request error:", error);
+			Alert.alert("Error", "Could not connect to server");
 		}
 	};
 

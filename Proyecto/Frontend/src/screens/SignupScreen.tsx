@@ -21,11 +21,11 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 
 	const handleSignup = async () => {
 		if (password !== confirmPassword) {
-			Alert.alert("Error", "Las contraseñas no contraseñean");
+			Alert.alert("Error", "Passwords do not match");
 			return;
 		}
 
-		console.log("Conectando a la IP:", apiUrl('/api/register'));
+		console.log("Connecting to IP:", apiUrl('/api/register'));
 
 		try {
 			const response = await fetch(apiUrl('/api/register'), {
@@ -38,10 +38,10 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 			if (!response.ok) {
 				throw new Error(data?.message || `Error ${response.status}`);
 			}
-			Alert.alert("Respuesta del servidor", data.message || "Registro exitoso");
+			Alert.alert("Success", data.message || "Registration successful");
 		} catch (error) {
-			console.error("Error en la solicitud:", error);
-			Alert.alert("Error", "No se pudo conectar con el servidor");
+			console.error("Request error:", error);
+			Alert.alert("Error", "Could not connect to server");
 		}
 	};
 

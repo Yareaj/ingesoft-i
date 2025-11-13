@@ -4,6 +4,7 @@ import cors from "cors";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import { getFirstUser, registerUser, loginUser } from "./db_connection/controller/UserController";
+import { saveTraining, getUserTrainings, calculateTraining } from "./db_connection/controller/TrainingController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -29,6 +30,11 @@ Database.initialize()
 
 		app.post("/api/login", loginUser);
 		app.post("/api/register", registerUser);
+
+		// Endpoints de training
+		app.post("/api/trainings/calculate", calculateTraining);
+		app.post("/api/trainings", saveTraining);
+		app.get("/api/trainings/:userEmail", getUserTrainings);
 
 		app.listen(PORT, () => {
 			console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);

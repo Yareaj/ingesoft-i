@@ -3,9 +3,6 @@ import Database from '../db/Database';
 import { User } from '../entity/User';
 import bcrypt from 'bcryptjs';
 
-/**
- * Endpoint de demostración: devuelve (o crea) el primer usuario registrado.
- */
 
 const userRepository = Database.getInstance().getRepository(User);
 export const getFirstUser = async (req: Request, res: Response) => {
@@ -15,10 +12,11 @@ export const getFirstUser = async (req: Request, res: Response) => {
 		let firstUser = users[0];
 
 		if (!firstUser) {
+			const hashedPassword = await bcrypt.hash("ruunerporlaUN", 10);
 			const newUser = userRepository.create({
 				email: "diegoghost@running.com",
 				username: "Diego Cabrera",
-				password: "ruunerporlaUN",
+				password: hashedPassword,
 				names: "Diego",
 				lastNames: "Cabrera",
 				age: 30
@@ -52,7 +50,7 @@ export const registerUser = async (req: Request, res: Response) => {
 		const { username, email, Name, lastname, age, password } = req.body ?? {};
 		if (!username || !email || !password || !Name || !lastname || !age) {
 			console.warn("⚠️  Missing required fields in body", { username, email, name, lastname, age, passwordPresent: Boolean(password) });
-			return res.status(400).json({ message: "Faltan campos requeridos: username, email, name, lastname, password" });
+			return res.status(400).json({ message: "Missing required fields: username, email, name, lastname, password" });
 		}
 
 		// TODO: insertar en DB si aplica. Por ahora respondemos éxito.
@@ -66,7 +64,7 @@ export const registerUser = async (req: Request, res: Response) => {
 			age: age
 		});
 		await userRepository.save(newUser);
-		return res.status(201).json({ message: "Usuario registrado correctamente", data: { username, email }});
+		return res.status(201).json({ message: "User registered successfully", data: { username, email }});
 	} catch (error) {
 		console.error("Error registering user:", error);
 		res.status(500).json({ message: "Internal server error" });
@@ -80,24 +78,27 @@ export const loginUser = async (req: Request, res: Response) => {
 		const { email, password } = req.body ?? {};
 		if (!email || !password) {
 			console.warn("⚠️  Missing required fields in query", { email, passwordPresent: Boolean(password) });
-			return res.status(400).json({ message: "Faltan campos requeridos: email, password" });
+			return res.status(400).json({ message: "Missing required fields: email, password" });
 		}
 
 		// TODO: Validar en DB si aplica. Por ahora respondemos éxito.
-		const user = await userRepository.findOne({ where: { email } });
+		const user = await userRepository.findOne({
+			where: { email },
+			select: ['email', 'username', 'names', 'lastNames', 'age', 'password']
+		});
 		if (!user) {
 			console.warn("⚠️  User not found for email:", email);
-			return res.status(401).json({ message: "Credenciales inválidas" });
+			return res.status(401).json({ message: "Invalid credentials" });
 		}
 		console.log("Contraseña ingresada:", password);
 		console.log("Hash guardado:", user.password);
 		const passwordMatch = await bcrypt.compare(password, user.password);
 		if (!passwordMatch) {
 			console.warn("⚠️  Invalid password for email:", email);
-			return res.status(401).json({ message: "Credenciales inválidas" });
+			return res.status(401).json({ message: "Invalid credentials" });
 		}
 
-		return res.status(200).json({ message: "Login exitoso", data: { email }});
+		return res.status(200).json({ message: "Login successful", data: { email }});
 	} catch (error) {
 		console.error("Error logging in user:", error);
 		res.status(500).json({ message: "Internal server error" });
