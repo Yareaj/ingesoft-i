@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Alert } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { GRButton } from '../components/GRButton';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import * as Location from 'expo-location';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+import { apiUrl } from '../config/api';
+import logo from '../../assets/logo.png';
 
-interface HomeScreenProps {
-  userName?: string;
-  userImage?: string;
-}
-
-export default function HomeScreen({ userName = 'Runner', userImage }: HomeScreenProps) {
+export default function HomeScreen() {
+	const { user } = useAuth();
+	const userName = user?.names || 'Runner';
+	const userImage = user?.profilePhoto
+		? apiUrl(`/images/${user.profilePhoto}`)
+		: apiUrl('/images/nouserimage.png');
 	const navigation = useNavigation();
 	const [location, setLocation] = useState<Location.LocationObject | null>(null);
 	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -65,15 +68,11 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 			<View style={commonStyles.header}>
 				<View style={styles.userInfoContainer}>
 					<View style={styles.smallProfileImageContainer}>
-						{userImage ? (
-							<Image source={{ uri: userImage }} style={commonStyles.profileImage} />
-						) : (
-							<View style={commonStyles.profileImagePlaceholder}>
-								<Text style={styles.smallPlaceholderText}>
-									{userName.charAt(0).toUpperCase()}
-								</Text>
-							</View>
-						)}
+						<Image
+							source={{ uri: userImage }}
+							style={commonStyles.profileImage}
+							defaultSource={logo}
+						/>
 					</View>
 					<Text style={styles.welcomeText}>Welcome back, {userName}!</Text>
 				</View>
@@ -100,13 +99,6 @@ export default function HomeScreen({ userName = 'Runner', userImage }: HomeScree
 						showsMyLocationButton={true}
 						followsUserLocation={true}
 					>
-						<Marker
-							coordinate={{
-								latitude: location.coords.latitude,
-								longitude: location.coords.longitude
-							}}
-							title="Your Location"
-						/>
 					</MapView>
 				) : (
 					<View style={styles.loadingContainer}>

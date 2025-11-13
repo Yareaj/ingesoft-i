@@ -17,24 +17,24 @@ interface TrainingCalculationResult {
 
 /**
  * Calcula la distancia entre dos coordenadas usando la fórmula de Haversine
- * @param lat1 Latitud del punto 1
- * @param lon1 Longitud del punto 1
- * @param lat2 Latitud del punto 2
- * @param lon2 Longitud del punto 2
+ * @param latitudePointOne Latitud del punto 1
+ * @param longitudePointOne Longitud del punto 1
+ * @param latitudePointTwo Latitud del punto 2
+ * @param longitudePointTwo Longitud del punto 2
  * @returns Distancia en kilómetros
  */
-export const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+export const calculateDistance = (latitudePointOne: number, longitudePointOne: number, latitudePointTwo: number, longitudePointTwo: number): number => {
 	// Radio de la Tierra en km
-	const R = 6371;
-	const dLat = toRad(lat2 - lat1);
-	const dLon = toRad(lon2 - lon1);
+	const earthRadius = 6371;
+	const diferenceLatitude = toRad(latitudePointTwo - latitudePointOne);
+	const diferenceLongitude = toRad(longitudePointTwo - longitudePointOne);
 
-	const a =
-		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-		Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+	const step =
+		Math.sin(diferenceLatitude / 2) * Math.sin(diferenceLatitude / 2) +
+		Math.cos(toRad(latitudePointOne)) * Math.cos(toRad(latitudePointTwo)) * Math.sin(diferenceLongitude / 2) * Math.sin(diferenceLongitude / 2);
 
-	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-	return R * c;
+	const step2 = 2 * Math.atan2(Math.sqrt(step), Math.sqrt(1 - step));
+	return earthRadius * step2;
 };
 
 /**

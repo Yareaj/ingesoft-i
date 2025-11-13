@@ -61,7 +61,10 @@ export default function ResumeTrainingScreen() {
 
 			if (response.ok) {
 				Alert.alert('Success', 'Training saved successfully');
-				navigation.navigate('Main' as never);
+				navigation.reset({
+					index: 0,
+					routes: [{ name: 'Main' as never }]
+				});
 			} else {
 				Alert.alert('Error', 'Failed to save training');
 			}
@@ -80,7 +83,10 @@ export default function ResumeTrainingScreen() {
 				{
 					text: 'Discard',
 					style: 'destructive',
-					onPress: () => navigation.navigate('Main' as never)
+					onPress: () => navigation.reset({
+						index: 0,
+						routes: [{ name: 'Main' as never }]
+					})
 				}
 			]
 		);

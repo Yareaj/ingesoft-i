@@ -5,13 +5,14 @@ import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginScreenProps {
 	onBack: () => void;
-	onLoginSuccess: () => void;
 }
 
-const LoginScreen = ({ onBack, onLoginSuccess }: LoginScreenProps) => {
+const LoginScreen = ({ onBack }: LoginScreenProps) => {
+	const { setUser } = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -27,9 +28,13 @@ const LoginScreen = ({ onBack, onLoginSuccess }: LoginScreenProps) => {
 			if (!response.ok) {
 				throw new Error(data?.message || `Error ${response.status}`);
 			}
-			Alert.alert("Success", data.message || "Login successful");
-			// Navigate to main app
-			onLoginSuccess();
+
+			// Store user data in context
+			if (data.user) {
+				setUser(data.user);
+			} else {
+				throw new Error("No user data received");
+			}
 		} catch (error) {
 			console.error("Request error:", error);
 			Alert.alert("Error", "Could not connect to server");

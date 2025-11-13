@@ -137,11 +137,17 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 			});
 			if (response.ok) {
 				const stats = await response.json();
-				navigation.navigate('ResumeTraining' as never, {
-					...stats,
-					route: route.filter(p => !p.isPause),
-					userEmail
-				} as never);
+				navigation.reset({
+					index: 1,
+					routes: [
+						{ name: 'Main' as never },
+						{ name: 'ResumeTraining' as never, params: {
+							...stats,
+							route: route.filter(p => !p.isPause),
+							userEmail
+						} as never }
+					]
+				});
 			} else {
 				Alert.alert('Error', 'Failed to calculate training stats');
 			}
@@ -172,15 +178,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						strokeWidth={4}
 					/>
 				)}
-				{currentLocation && (
-					<Marker
-						coordinate={{
-							latitude: currentLocation.coords.latitude,
-							longitude: currentLocation.coords.longitude
-						}}
-						title="Current Position"
-					/>
-				)}
+
 			</MapView>
 			<View style={styles.statsPanel}>
 				<View style={styles.statItem}>

@@ -2,9 +2,11 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text, Platform } from 'react-native';
+import { Text, Platform, Image, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { theme } from '../config/designSystem';
+import { useAuth } from '../context/AuthContext';
+import { apiUrl } from '../config/api';
 
 import HomeScreen from '../screens/HomeScreen';
 import FeedScreen from '../screens/FeedScreen';
@@ -16,6 +18,11 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
+	const { user } = useAuth();
+	const profilePhotoUrl = user?.profilePhoto 
+		? apiUrl(`/images/${user.profilePhoto}`) 
+		: apiUrl('/images/nouserimage.png');
+
 	return (
 		<Tab.Navigator
 			screenOptions={{
@@ -58,8 +65,21 @@ function TabNavigator() {
 				name="Profile"
 				component={ProfileScreen}
 				options={{
-					tabBarIcon: ({ color }) => (
-						<Text style={{ fontSize: 24, color }}>👤</Text>
+					tabBarIcon: ({ color, focused }) => (
+						<View style={{ 
+							width: 28, 
+							height: 28, 
+							borderRadius: 14,
+							overflow: 'hidden',
+							borderWidth: focused ? 2 : 0,
+							borderColor: color
+						}}>
+							<Image 
+								source={{ uri: profilePhotoUrl }} 
+								style={{ width: '100%', height: '100%' }}
+								resizeMode="cover"
+							/>
+						</View>
 					)
 				}}
 			/>

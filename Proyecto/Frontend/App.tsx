@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React from 'react';
 import MainNavigator from './src/navigation/MainNavigator';
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 
-export default function App() {
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
+function AppContent() {
+	const { isAuthenticated } = useAuth();
 
 	if (isAuthenticated) {
 		return <MainNavigator />;
 	}
 
-	return <WelcomeScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
+	return <WelcomeScreen />;
+}
+
+export default function App() {
+	return (
+		<AuthProvider>
+			<AppContent />
+		</AuthProvider>
+	);
 }

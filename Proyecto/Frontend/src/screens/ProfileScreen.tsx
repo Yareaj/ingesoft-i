@@ -4,18 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../config/commonStyles';
 import { theme } from '../config/designSystem';
 import { GRButton } from '../components/GRButton';
+import { useAuth } from '../context/AuthContext';
+import { apiUrl } from '../config/api';
+import logo from '../../assets/logo.png';
 
-interface ProfileScreenProps {
-  userName?: string;
-  userEmail?: string;
-  userImage?: string;
-}
+export default function ProfileScreen() {
+	const { user, logout } = useAuth();
 
-export default function ProfileScreen({
-	userName = 'Runner',
-	userEmail = 'runner@ghostrunning.com',
-	userImage
-}: ProfileScreenProps) {
+	const userName = user?.names || 'Runner';
+	const userEmail = user?.email || 'runner@ghostrunning.com';
+	const userImage = user?.profilePhoto
+		? apiUrl(`/images/${user.profilePhoto}`)
+		: apiUrl('/images/nouserimage.png');
 	return (
 		<SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
 			<View style={commonStyles.header}>
@@ -26,15 +26,11 @@ export default function ProfileScreen({
 				{/* Profile Image and Info */}
 				<View style={styles.profileSection}>
 					<View style={[commonStyles.profileImageContainer, styles.largeProfileImage]}>
-						{userImage ? (
-							<Image source={{ uri: userImage }} style={commonStyles.profileImage} />
-						) : (
-							<View style={commonStyles.profileImagePlaceholder}>
-								<Text style={commonStyles.profileImagePlaceholderText}>
-									{userName.charAt(0).toUpperCase()}
-								</Text>
-							</View>
-						)}
+						<Image
+							source={{ uri: userImage }}
+							style={commonStyles.profileImage}
+							defaultSource={logo}
+						/>
 					</View>
 
 					<Text style={styles.userName}>{userName}</Text>
@@ -61,7 +57,7 @@ export default function ProfileScreen({
 				<View style={styles.actionsSection}>
 					<GRButton label="✏️ Edit Profile" variant="secondary" style={styles.actionButtonSpacing} />
 					<GRButton label="⚙️ Settings" variant="secondary" style={styles.actionButtonSpacing} />
-					<GRButton label="🚪 Logout" variant="primary" style={styles.actionButtonSpacing} />
+					<GRButton label="🚪 Logout" variant="primary" onPress={logout} style={styles.actionButtonSpacing} />
 				</View>
 			</ScrollView>
 		</SafeAreaView>
