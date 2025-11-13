@@ -12,7 +12,7 @@ export class User {
     @Column({ name: "username", length: 45, unique: true })
     	username!: string;
 
-    //le quite el select: false porque no me dejaba hacer login :p
+    // le quite el select: false porque no me dejaba hacer login :p
     @Column({ name: "password", length: 255 })
     	password!: string;
 
