@@ -13,6 +13,9 @@ interface SignupScreenProps {
 const SignupScreen = ({ onBack }: SignupScreenProps) => {
 	const [email, setEmail] = useState('');
 	const [username, setUsername] = useState('');
+	const [Name, setName] = useState('');
+	const [lastname, setLastName] = useState('');
+	const [age, setAge] = useState('');
 	const [password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -28,7 +31,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 			const response = await fetch(apiUrl('/api/register'), {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ username, email, password })
+				body: JSON.stringify({ username, email, Name, lastname, age, password })
 			});
 
 			const data = await response.json();
@@ -66,6 +69,31 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 							value={username}
 							onChangeText={setUsername}
 							autoCapitalize="none"
+						/>
+						<TextInput
+							style={commonStyles.input}
+							placeholder="Name"
+							placeholderTextColor="#999"
+							value={Name}
+							onChangeText={setName}
+							autoCapitalize="none"
+						/>
+						<TextInput
+							style={commonStyles.input}
+							placeholder="Last Name"
+							placeholderTextColor="#999"
+							value={lastname}
+							onChangeText={setLastName}
+							autoCapitalize="none"
+						/>
+						<TextInput
+							style={commonStyles.input}
+							placeholder="Age"
+							placeholderTextColor="#999"
+							value={age}
+							onChangeText={setAge}
+							autoCapitalize="none"
+							keyboardType="numeric"
 						/>
 
 						<TextInput

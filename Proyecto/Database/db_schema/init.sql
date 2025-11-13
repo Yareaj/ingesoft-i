@@ -20,7 +20,7 @@ DROP TABLE IF EXISTS "UserGR" CASCADE;
 CREATE TABLE "UserGR" (
   "email" VARCHAR(100) NOT NULL,
   "username" VARCHAR(45) NOT NULL,
-  "password" VARCHAR(45) NOT NULL,
+  "password" VARCHAR(255) NOT NULL,
   "names" VARCHAR(45) NOT NULL,
   "lastNames" VARCHAR(45) NOT NULL,
   "age" INT NOT NULL,
