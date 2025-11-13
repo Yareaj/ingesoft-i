@@ -19,8 +19,8 @@ const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
 	const { user } = useAuth();
-	const profilePhotoUrl = user?.profilePhoto 
-		? apiUrl(`/images/${user.profilePhoto}`) 
+	const profilePhotoUrl = user?.profilePhoto
+		? apiUrl(`/images/${user.profilePhoto}`)
 		: apiUrl('/images/nouserimage.png');
 
 	return (
@@ -66,16 +66,16 @@ function TabNavigator() {
 				component={ProfileScreen}
 				options={{
 					tabBarIcon: ({ color, focused }) => (
-						<View style={{ 
-							width: 28, 
-							height: 28, 
+						<View style={{
+							width: 28,
+							height: 28,
 							borderRadius: 14,
 							overflow: 'hidden',
 							borderWidth: focused ? 2 : 0,
 							borderColor: color
 						}}>
-							<Image 
-								source={{ uri: profilePhotoUrl }} 
+							<Image
+								source={{ uri: profilePhotoUrl }}
 								style={{ width: '100%', height: '100%' }}
 								resizeMode="cover"
 							/>
