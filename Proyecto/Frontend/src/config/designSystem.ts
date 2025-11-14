@@ -31,6 +31,7 @@ export const theme = {
 		},
 		weight: {
 			regular: '400' as const,
+			semibold: '600' as const,
 			bold: '700' as const
 		}
 	}

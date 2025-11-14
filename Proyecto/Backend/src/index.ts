@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { getFirstUser, registerUser, loginUser } from "./db_connection/controller/UserController";
+import { getFirstUser, registerUser, loginUser, upload } from "./db_connection/controller/UserController";
+import { saveTraining, getUserTrainings, calculateTraining } from "./db_connection/controller/TrainingController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -24,11 +25,19 @@ Database.initialize()
 		app.use(cors());
 		app.use(express.json());
 
+		// Serve static images
+		app.use('/images', express.static(path.join(__dirname, '../../Database/db_images')));
+
 		// Aqui definimos los endpoints
 		app.get("/api/hello-user", getFirstUser);
 
 		app.post("/api/login", loginUser);
-		app.post("/api/register", registerUser);
+		app.post("/api/register", upload.single('profilePhoto'), registerUser);
+
+		// Endpoints de training
+		app.post("/api/trainings/calculate", calculateTraining);
+		app.post("/api/trainings", saveTraining);
+		app.get("/api/trainings/:userEmail", getUserTrainings);
 
 		app.listen(PORT, () => {
 			console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);

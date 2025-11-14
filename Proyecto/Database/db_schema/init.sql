@@ -1,26 +1,12 @@
 -- PostgreSQL-compatible DDL converted from MySQL
 -- NOTE: This file assumes you are already connected to the target database.
-
-DROP TABLE IF EXISTS "Comments" CASCADE;
-DROP TABLE IF EXISTS "Route_has_Coordinate" CASCADE;
-DROP TABLE IF EXISTS "Kilometer" CASCADE;
-DROP TABLE IF EXISTS "Publication" CASCADE;
-DROP TABLE IF EXISTS "Training" CASCADE;
-DROP TABLE IF EXISTS "Followed" CASCADE;
-DROP TABLE IF EXISTS "User_has_MonthlyChallenge" CASCADE;
-DROP TABLE IF EXISTS "MonthlyChallenge" CASCADE;
-DROP TABLE IF EXISTS "Reto" CASCADE;
-DROP TABLE IF EXISTS "Coordinate" CASCADE;
-DROP TABLE IF EXISTS "Route" CASCADE;
-DROP TABLE IF EXISTS "WeeklyGoal" CASCADE;
-DROP TABLE IF EXISTS "PhysicalState" CASCADE;
-DROP TABLE IF EXISTS "UserGR" CASCADE;
+-- Modified to preserve existing data: CREATE TABLE IF NOT EXISTS instead of DROP TABLE
 
 -- Tabla UserGR
-CREATE TABLE "UserGR" (
+CREATE TABLE IF NOT EXISTS "UserGR" (
   "email" VARCHAR(100) NOT NULL,
   "username" VARCHAR(45) NOT NULL,
-  "password" VARCHAR(45) NOT NULL,
+  "password" VARCHAR(255) NOT NULL,
   "names" VARCHAR(45) NOT NULL,
   "lastNames" VARCHAR(45) NOT NULL,
   "age" INT NOT NULL,
@@ -32,7 +18,7 @@ CREATE TABLE "UserGR" (
 );
 
 -- Tabla PhysicalState
-CREATE TABLE "PhysicalState" (
+CREATE TABLE IF NOT EXISTS "PhysicalState" (
   "userEmail" VARCHAR(100) NOT NULL,
   "date" TIMESTAMP NOT NULL,
   "height" DECIMAL(3,2) NOT NULL,
@@ -40,10 +26,11 @@ CREATE TABLE "PhysicalState" (
   PRIMARY KEY ("userEmail", "date")
 );
 
+ALTER TABLE "PhysicalState" DROP CONSTRAINT IF EXISTS fk_physicalstate_usergr;
 ALTER TABLE "PhysicalState" ADD CONSTRAINT fk_physicalstate_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla WeeklyGoal
-CREATE TABLE "WeeklyGoal" (
+CREATE TABLE IF NOT EXISTS "WeeklyGoal" (
   "userEmail" VARCHAR(100) NOT NULL,
   "startDate" TIMESTAMP NOT NULL,
   "trainingQuantity" INT NOT NULL,
@@ -52,16 +39,17 @@ CREATE TABLE "WeeklyGoal" (
   PRIMARY KEY ("userEmail", "startDate")
 );
 
+ALTER TABLE "WeeklyGoal" DROP CONSTRAINT IF EXISTS fk_weeklygoal_usergr;
 ALTER TABLE "WeeklyGoal" ADD CONSTRAINT fk_weeklygoal_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Route
-CREATE TABLE "Route" (
+CREATE TABLE IF NOT EXISTS "Route" (
   "id" SERIAL PRIMARY KEY,
   "distance" DECIMAL(5,2) NOT NULL
 );
 
 -- Tabla Coordinate
-CREATE TABLE "Coordinate" (
+CREATE TABLE IF NOT EXISTS "Coordinate" (
   "id" SERIAL PRIMARY KEY,
   "latitude" REAL NOT NULL,
   "longitude" REAL NOT NULL,
@@ -69,7 +57,7 @@ CREATE TABLE "Coordinate" (
 );
 
 -- Tabla MonthlyChallenge
-CREATE TABLE "MonthlyChallenge" (
+CREATE TABLE IF NOT EXISTS "MonthlyChallenge" (
   "id" SERIAL PRIMARY KEY,
   "distance" DECIMAL(5,2) NOT NULL,
   "startDate" DATE NOT NULL,
@@ -77,27 +65,31 @@ CREATE TABLE "MonthlyChallenge" (
 );
 
 -- Tabla User_has_MonthlyChallenge
-CREATE TABLE "User_has_MonthlyChallenge" (
+CREATE TABLE IF NOT EXISTS "User_has_MonthlyChallenge" (
   "monId" INT NOT NULL,
   "userEmail" VARCHAR(100) NOT NULL,
   PRIMARY KEY ("monId", "userEmail")
 );
 
+ALTER TABLE "User_has_MonthlyChallenge" DROP CONSTRAINT IF EXISTS fk_user_monthlychallenge_monthly;
+ALTER TABLE "User_has_MonthlyChallenge" DROP CONSTRAINT IF EXISTS fk_user_monthlychallenge_usergr;
 ALTER TABLE "User_has_MonthlyChallenge" ADD CONSTRAINT fk_user_monthlychallenge_monthly FOREIGN KEY ("monId") REFERENCES "MonthlyChallenge"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "User_has_MonthlyChallenge" ADD CONSTRAINT fk_user_monthlychallenge_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Route_has_Coordinate
-CREATE TABLE "Route_has_Coordinate" (
+CREATE TABLE IF NOT EXISTS "Route_has_Coordinate" (
   "routeId" INT NOT NULL,
   "coordinateId" INT NOT NULL,
   PRIMARY KEY ("routeId", "coordinateId")
 );
 
+ALTER TABLE "Route_has_Coordinate" DROP CONSTRAINT IF EXISTS fk_route_has_coordinate_route;
+ALTER TABLE "Route_has_Coordinate" DROP CONSTRAINT IF EXISTS fk_route_has_coordinate_coordinate;
 ALTER TABLE "Route_has_Coordinate" ADD CONSTRAINT fk_route_has_coordinate_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "Route_has_Coordinate" ADD CONSTRAINT fk_route_has_coordinate_coordinate FOREIGN KEY ("coordinateId") REFERENCES "Coordinate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Training
-CREATE TABLE "Training" (
+CREATE TABLE IF NOT EXISTS "Training" (
   "counter" SERIAL PRIMARY KEY,
   "userEmail" VARCHAR(100) NOT NULL,
   "routeId" INT NOT NULL,
@@ -114,11 +106,13 @@ CREATE TABLE "Training" (
   UNIQUE ("userEmail", "routeId", "counter")
 );
 
+ALTER TABLE "Training" DROP CONSTRAINT IF EXISTS fk_training_usergr;
+ALTER TABLE "Training" DROP CONSTRAINT IF EXISTS fk_training_route;
 ALTER TABLE "Training" ADD CONSTRAINT fk_training_usergr FOREIGN KEY ("userEmail") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "Training" ADD CONSTRAINT fk_training_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Kilometer
-CREATE TABLE "Kilometer" (
+CREATE TABLE IF NOT EXISTS "Kilometer" (
   "counter" SERIAL,
   "time" TIME NOT NULL,
   "routeId" INT NOT NULL,
@@ -127,11 +121,13 @@ CREATE TABLE "Kilometer" (
   PRIMARY KEY ("counter", "routeId", "trainingCounter", "userEmail")
 );
 
+ALTER TABLE "Kilometer" DROP CONSTRAINT IF EXISTS fk_kilometer_route;
+ALTER TABLE "Kilometer" DROP CONSTRAINT IF EXISTS fk_kilometer_training;
 ALTER TABLE "Kilometer" ADD CONSTRAINT fk_kilometer_route FOREIGN KEY ("routeId") REFERENCES "Route"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "Kilometer" ADD CONSTRAINT fk_kilometer_training FOREIGN KEY ("userEmail", "routeId", "trainingCounter") REFERENCES "Training"("userEmail", "routeId", "counter") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Publication
-CREATE TABLE "Publication" (
+CREATE TABLE IF NOT EXISTS "Publication" (
   "counter" SERIAL,
   "likes" INT NOT NULL,
   "routeImage" VARCHAR(255),
@@ -143,20 +139,23 @@ CREATE TABLE "Publication" (
   PRIMARY KEY ("counter", "userEmail", "trainingCounter", "routeId")
 );
 
+ALTER TABLE "Publication" DROP CONSTRAINT IF EXISTS fk_publication_training;
 ALTER TABLE "Publication" ADD CONSTRAINT fk_publication_training FOREIGN KEY ("userEmail", "routeId", "trainingCounter") REFERENCES "Training"("userEmail", "routeId", "counter") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Followed
-CREATE TABLE "Followed" (
+CREATE TABLE IF NOT EXISTS "Followed" (
   "emailFollower" VARCHAR(100) NOT NULL,
   "emailFollowed" VARCHAR(100) NOT NULL,
   PRIMARY KEY ("emailFollower", "emailFollowed")
 );
 
+ALTER TABLE "Followed" DROP CONSTRAINT IF EXISTS fk_followed_follower;
+ALTER TABLE "Followed" DROP CONSTRAINT IF EXISTS fk_followed_followed;
 ALTER TABLE "Followed" ADD CONSTRAINT fk_followed_follower FOREIGN KEY ("emailFollower") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "Followed" ADD CONSTRAINT fk_followed_followed FOREIGN KEY ("emailFollowed") REFERENCES "UserGR"("email") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Comments (Comentarios de publicaciones)
-CREATE TABLE "Comments" (
+CREATE TABLE IF NOT EXISTS "Comments" (
   "publicationCounter" INT NOT NULL,
   "userEmail" VARCHAR(100) NOT NULL,
   "trainingCounter" INT NOT NULL,
@@ -168,6 +167,7 @@ CREATE TABLE "Comments" (
   PRIMARY KEY ("counter", "publicationCounter", "userEmail", "trainingCounter", "routeId")
 );
 
+ALTER TABLE "Comments" DROP CONSTRAINT IF EXISTS fk_comments_publication;
 ALTER TABLE "Comments" ADD CONSTRAINT fk_comments_publication FOREIGN KEY ("publicationCounter", "userEmail", "trainingCounter", "routeId") 
   REFERENCES "Publication"("counter", "userEmail", "trainingCounter", "routeId") 
   ON DELETE CASCADE ON UPDATE CASCADE;

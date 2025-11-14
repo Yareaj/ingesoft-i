@@ -5,12 +5,14 @@ import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginScreenProps {
-  onBack: () => void;
+	onBack: () => void;
 }
 
 const LoginScreen = ({ onBack }: LoginScreenProps) => {
+	const { setUser } = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -26,10 +28,16 @@ const LoginScreen = ({ onBack }: LoginScreenProps) => {
 			if (!response.ok) {
 				throw new Error(data?.message || `Error ${response.status}`);
 			}
-			Alert.alert("Respuesta del servidor", data.message || "Registro exitoso");
+
+			// Store user data in context
+			if (data.user) {
+				setUser(data.user);
+			} else {
+				throw new Error("No user data received");
+			}
 		} catch (error) {
-			console.error("Error en la solicitud:", error);
-			Alert.alert("Error", "No se pudo conectar con el servidor");
+			console.error("Request error:", error);
+			Alert.alert("Error", "Could not connect to server");
 		}
 	};
 
