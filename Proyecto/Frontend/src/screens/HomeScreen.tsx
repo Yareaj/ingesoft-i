@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
-import { GRButton } from '../components/GRButton';
+import GRButton from '../components/GRButton';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import * as Location from 'expo-location';

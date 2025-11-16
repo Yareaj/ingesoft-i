@@ -11,7 +11,7 @@ interface LoginScreenProps {
 	onBack: () => void;
 }
 
-const LoginScreen = ({ onBack }: LoginScreenProps) => {
+const loginScreen = ({ onBack }: LoginScreenProps) => {
 	const { setUser } = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
 	buttonSpacing: { width: '100%', marginTop: theme.spacing.s }
 });
 
-export default LoginScreen;
+export default loginScreen;

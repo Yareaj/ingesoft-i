@@ -43,9 +43,9 @@ export const registerUser = async (req: Request, res: Response) => {
 	try {
 		console.log("➡️  /api/register hit. Body:", req.body);
 
-		const { username, email, Name, lastname, age, password, gender, description } = req.body ?? {};
-		if (!username || !email || !password || !Name || !lastname || !age) {
-			console.warn("⚠️  Missing required fields in body", { username, email, Name, lastname, age, passwordPresent: Boolean(password) });
+		const { username, email, name, lastname, age, password, gender, description } = req.body ?? {};
+		if (!username || !email || !password || !name || !lastname || !age) {
+			console.warn("⚠️  Missing required fields in body", { username, email, name, lastname, age, passwordPresent: Boolean(password) });
 			return res.status(400).json({ message: "Missing required fields: username, email, name, lastname, password" });
 		}
 
@@ -59,7 +59,7 @@ export const registerUser = async (req: Request, res: Response) => {
 			email: email,
 			username: username,
 			password: hashedPassword,
-			names: Name,
+			names: name,
 			lastNames: lastname,
 			age: parseInt(age),
 			gender: gender || undefined,
