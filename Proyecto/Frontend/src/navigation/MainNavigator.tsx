@@ -14,8 +14,8 @@ import ProfileScreen from '../screens/ProfileScreen';
 import TrainingScreen from '../screens/TrainingScreen';
 import ResumeTrainingScreen from '../screens/ResumeTrainingScreen';
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const tab = createBottomTabNavigator();
+const stack = createNativeStackNavigator();
 
 function TabNavigator() {
 	const { user } = useAuth();
@@ -24,7 +24,7 @@ function TabNavigator() {
 		: apiUrl('/images/nouserimage.png');
 
 	return (
-		<Tab.Navigator
+		<tab.Navigator
 			screenOptions={{
 				headerShown: false,
 				tabBarStyle: {
@@ -43,7 +43,7 @@ function TabNavigator() {
 				}
 			}}
 		>
-			<Tab.Screen
+			<tab.Screen
 				name="Home"
 				component={HomeScreen}
 				options={{
@@ -52,7 +52,7 @@ function TabNavigator() {
 					)
 				}}
 			/>
-			<Tab.Screen
+			<tab.Screen
 				name="Feed"
 				component={FeedScreen}
 				options={{
@@ -61,7 +61,7 @@ function TabNavigator() {
 					)
 				}}
 			/>
-			<Tab.Screen
+			<tab.Screen
 				name="Profile"
 				component={ProfileScreen}
 				options={{
@@ -83,7 +83,7 @@ function TabNavigator() {
 					)
 				}}
 			/>
-		</Tab.Navigator>
+		</tab.Navigator>
 	);
 }
 
@@ -91,15 +91,15 @@ export default function MainNavigator() {
 	return (
 		<SafeAreaProvider>
 			<NavigationContainer>
-				<Stack.Navigator
+				<stack.Navigator
 					screenOptions={{
 						headerShown: false
 					}}
 				>
-					<Stack.Screen name="Main" component={TabNavigator} />
-					<Stack.Screen name="Training" component={TrainingScreen} />
-					<Stack.Screen name="ResumeTraining" component={ResumeTrainingScreen} />
-				</Stack.Navigator>
+					<stack.Screen name="Main" component={TabNavigator} />
+					<stack.Screen name="Training" component={TrainingScreen} />
+					<stack.Screen name="ResumeTraining" component={ResumeTrainingScreen} />
+				</stack.Navigator>
 			</NavigationContainer>
 		</SafeAreaProvider>
 	);

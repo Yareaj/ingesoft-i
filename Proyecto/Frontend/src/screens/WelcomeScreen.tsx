@@ -10,7 +10,7 @@ import GRButton from '../components/GRButton';
 
 type Screen = 'welcome' | 'login' | 'signup';
 
-const WelcomeScreen = () => {
+const welcomeScreen = () => {
 	const [currentScreen, setCurrentScreen] = useState<Screen>('welcome');
 
 	if (currentScreen === 'login') {
@@ -48,4 +48,4 @@ const styles = StyleSheet.create({
 	fullWidthButton: { width: '100%' }
 });
 
-export default WelcomeScreen;
+export default welcomeScreen;

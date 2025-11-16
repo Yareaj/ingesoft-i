@@ -12,10 +12,10 @@ interface SignupScreenProps {
   onBack: () => void;
 }
 
-const SignupScreen = ({ onBack }: SignupScreenProps) => {
+const signupScreen = ({ onBack }: SignupScreenProps) => {
 	const [email, setEmail] = useState('');
 	const [username, setUsername] = useState('');
-	const [Name, setName] = useState('');
+	const [name, setName] = useState('');
 	const [lastname, setLastName] = useState('');
 	const [age, setAge] = useState('');
 	const [password, setPassword] = useState('');
@@ -56,7 +56,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 			const formData = new FormData();
 			formData.append('username', username);
 			formData.append('email', email);
-			formData.append('Name', Name);
+			formData.append('name', name);
 			formData.append('lastname', lastname);
 			formData.append('age', age);
 			formData.append('password', password);
@@ -131,7 +131,7 @@ const SignupScreen = ({ onBack }: SignupScreenProps) => {
 							style={commonStyles.input}
 							placeholder="Name"
 							placeholderTextColor="#999"
-							value={Name}
+							value={name}
 							onChangeText={setName}
 							autoCapitalize="none"
 						/>
@@ -259,4 +259,4 @@ const styles = StyleSheet.create({
 	}
 });
 
-export default SignupScreen;
+export default signupScreen;

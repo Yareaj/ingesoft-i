@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../config/dataSource";
+import { appDataSource } from "../config/dataSource";
 import { Training } from "../entity/Training";
 import { User } from "../entity/User";
 import { Route } from "../entity/Route";
 import { Coordinate } from "../entity/Coordinate";
 import { calculateTrainingStats, calculatePace } from "../../services/trainingService";
 
-const trainingRepository = AppDataSource.getRepository(Training);
-const userRepository = AppDataSource.getRepository(User);
-const routeRepository = AppDataSource.getRepository(Route);
-const coordinateRepository = AppDataSource.getRepository(Coordinate);
+const trainingRepository = appDataSource.getRepository(Training);
+const userRepository = appDataSource.getRepository(User);
+const routeRepository = appDataSource.getRepository(Route);
+const coordinateRepository = appDataSource.getRepository(Coordinate);
 
 export const calculateTraining = async (req: Request, res: Response) => {
 	try {
@@ -19,7 +19,6 @@ export const calculateTraining = async (req: Request, res: Response) => {
 			return res.status(400).json({ error: "At least 2 coordinates are required" });
 		}
 
-		// Calcular estadísticas
 		const stats = calculateTrainingStats(coordinates, userWeight || 70);
 		const pace = calculatePace(stats.avgSpeed);
 

@@ -17,9 +17,9 @@ interface AuthContextType {
 	logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const authContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const authProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<UserData | null>(null);
 
 	const logout = () => {
@@ -27,19 +27,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	};
 
 	return (
-		<AuthContext.Provider value={{
+		<authContext.Provider value={{
 			user,
 			setUser,
 			isAuthenticated: !!user,
 			logout
 		}}>
 			{children}
-		</AuthContext.Provider>
+		</authContext.Provider>
 	);
 };
 
 export const useAuth = () => {
-	const context = useContext(AuthContext);
+	const context = useContext(authContext);
 	if (!context) {
 		throw new Error('useAuth must be used within an AuthProvider');
 	}

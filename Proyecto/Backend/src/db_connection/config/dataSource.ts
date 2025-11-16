@@ -16,7 +16,7 @@ import { Comment } from "../entity/Comment";
 // Cargar .env desde raíz del proyecto (cuatro niveles arriba de src/db_connection/config/)
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
-export const AppDataSource = new DataSource({
+export const appDataSource = new DataSource({
 	type: "postgres",
 	host: process.env.DB_HOST,
 	port: Number(process.env.DB_PORT),

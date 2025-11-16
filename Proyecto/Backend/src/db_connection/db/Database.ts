@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { AppDataSource } from "../config/dataSource";
+import { appDataSource } from "../config/dataSource";
 
 class Database {
 	private static instance: DataSource | null = null;
@@ -9,7 +9,7 @@ class Database {
 
 	static getInstance(): DataSource {
 		if (!Database.instance) {
-			Database.instance = AppDataSource;
+			Database.instance = appDataSource;
 		}
 		return Database.instance;
 	}
