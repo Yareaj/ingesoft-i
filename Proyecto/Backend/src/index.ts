@@ -1,12 +1,11 @@
 // src/index.ts
-
-import "reflect-metadata"; // <-- ✅ CRÍTICO: DEBE SER LA PRIMERA LÍNEA
-import express from "express";
-import * as dotenv from "dotenv";
-import * as path from "path";
+import "reflect-metadata"; // Debe ser la primera importación - necesaria para TypeORM
+import express from "express"; // Framework web
+import * as dotenv from "dotenv";  // Manejo de variables de entorno
+import * as path from "path"; // Manejo de rutas de archivos
+import { AppDataSource } from "./config/dataSource";  // Configuración de TypeORM
 import Database from "./db/Database";
-import { getFirstUser } from "./controller/UserController";
-
+import { getFirstUser } from "./controller/UserController"; // Controlador de usuario
 
 
 // Cargar variables de entorno
@@ -25,7 +24,6 @@ Database.initialize()
         app.use(express.json());  // Middleware para parsear JSON
         
         // Ruta de prueba
-
         app.get("/api/hello-user", getFirstUser);
 
         // Iniciar el Servidor
