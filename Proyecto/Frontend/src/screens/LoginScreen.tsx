@@ -12,7 +12,7 @@ interface LoginScreenProps {
 }
 
 const loginScreen = ({ onBack }: LoginScreenProps) => {
-	const { setUser } = useAuth();
+	const { setUser, signInWithGoogle } = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 
@@ -67,6 +67,7 @@ const loginScreen = ({ onBack }: LoginScreenProps) => {
 					/>
 
 					<GRButton label="Enter" variant="primary" onPress={handleLogin} style={styles.buttonSpacing} />
+					<GRButton label="Sign In with Google" variant="secondary" onPress={() => signInWithGoogle()} leftIcon="G" style={styles.buttonSpacing} />
 					<GRButton label="Back" variant="outline" onPress={onBack} style={styles.buttonSpacing} />
 				</View>
 			</View>

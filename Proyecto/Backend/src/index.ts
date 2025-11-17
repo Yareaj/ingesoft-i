@@ -4,12 +4,12 @@ import cors from "cors";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import { getFirstUser, registerUser, loginUser, upload } from "./db_connection/controller/UserController";
+import { verifyGoogleToken, exchangeCodeForToken } from './db_connection/controller/AuthController';
 import { saveTraining, getUserTrainings, calculateTraining } from "./db_connection/controller/TrainingController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
 import getLocalIP from "./db_connection/config/getLocalIp";
-
 
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -33,6 +33,11 @@ Database.initialize()
 
 		app.post("/api/login", loginUser);
 		app.post("/api/register", upload.single('profilePhoto'), registerUser);
+
+		// Google freaking OAuth endpoints
+		app.post('/api/auth/google', express.json(), verifyGoogleToken);
+		app.post('/api/auth/google/code', express.json(), exchangeCodeForToken);
+		app.get('/api/auth/google/callback', exchangeCodeForToken);
 
 		// Endpoints de training
 		app.post("/api/trainings/calculate", calculateTraining);

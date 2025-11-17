@@ -7,12 +7,14 @@ import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
 import { apiUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 interface SignupScreenProps {
   onBack: () => void;
 }
 
 const signupScreen = ({ onBack }: SignupScreenProps) => {
+	const { signInWithGoogle } = useAuth();
 	const [email, setEmail] = useState('');
 	const [username, setUsername] = useState('');
 	const [name, setName] = useState('');
@@ -198,6 +200,7 @@ const signupScreen = ({ onBack }: SignupScreenProps) => {
 						/>
 
 						<GRButton label="Create Account" variant="primary" onPress={handleSignup} style={styles.buttonSpacing} />
+						<GRButton label="Sign Up with Google" variant="secondary" onPress={() => signInWithGoogle()} leftIcon="G" style={styles.buttonSpacing} />
 						<GRButton label="Back" variant="outline" onPress={onBack} style={styles.buttonSpacing} />
 					</View>
 				</View>
