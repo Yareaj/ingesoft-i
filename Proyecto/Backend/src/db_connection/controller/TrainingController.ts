@@ -40,6 +40,13 @@ export const saveTraining = async (req: Request, res: Response) => {
 			return res.status(400).json({ error: "userEmail is required" });
 		}
 
+		// Validate that we have either a route with at least 2 coordinates or a positive distance
+		const hasValidRoute = route && Array.isArray(route) && route.length >= 2;
+		const parsedDistance = Number(distance) || 0;
+		if (!hasValidRoute && parsedDistance <= 0) {
+			return res.status(400).json({ error: "Invalid training data: provide a route with at least 2 coordinates or a positive distance" });
+		}
+
 		// Buscar usuario
 		const user = await userRepository.findOne({ where: { email: userEmail }});
 		if (!user) {

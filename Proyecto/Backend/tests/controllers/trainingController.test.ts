@@ -5,6 +5,7 @@ import { describe, it, before } from 'mocha';
 describe('TrainingController.saveTraining', () => {
   let controller: any;
   let originalGetRepository: any;
+  let shouldThrowOnSave = false;
 
   before(() => {
     // Build fake repositories with minimal behavior required by the controller
@@ -45,6 +46,7 @@ describe('TrainingController.saveTraining', () => {
       Training: {
         create: (obj: any) => ({ ...obj }),
         save: async (t: any) => {
+          if (shouldThrowOnSave) throw new Error('Simulated save error');
           t.counter = trainingCounter++;
           return t;
         }
@@ -116,5 +118,38 @@ describe('TrainingController.saveTraining', () => {
     expect(t.distance).to.equal(5000);
     expect(t).to.have.property('avgSpeed');
     expect(t.avgSpeed).to.equal(12.0);
+  });
+
+  it('should return 400 if userEmail is missing', async () => {
+    const req: any = { body: { distance: 100 } };
+    const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
+    await controller.saveTraining(req, res);
+    expect(res.statusCode).to.equal(400);
+  });
+
+  it('should return 404 when user not found', async () => {
+    const req: any = { body: { userEmail: 'notfound@local', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 } ] } };
+    const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
+    await controller.saveTraining(req, res);
+    expect(res.statusCode).to.equal(404);
+  });
+
+  it('should reject training when no route and zero distance', async () => {
+    const req: any = { body: { userEmail: 'test@local', distance: undefined } };
+    const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
+    await controller.saveTraining(req, res);
+    // Now controller rejects trainings with no valid route and zero distance
+    expect(res.statusCode).to.equal(400);
+  });
+
+  it('should return 500 when training repository save fails', async () => {
+    // enable throwing in fake repo
+    shouldThrowOnSave = true;
+    const req: any = { body: { userEmail: 'test@local', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 } ] } };
+    const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
+    await controller.saveTraining(req, res);
+    expect(res.statusCode).to.equal(500);
+    // restore flag
+    shouldThrowOnSave = false;
   });
 });
