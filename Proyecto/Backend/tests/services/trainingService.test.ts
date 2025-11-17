@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { haversineDistance, calculateCalories, calculatePace } from '../../src/services/trainingService';
+import { haversineDistance, calculateCalories, calculatePace, calculateElevation } from '../../src/services/trainingService';
 
 describe('TrainingService Tests', () => {
 
@@ -182,5 +182,66 @@ describe('TrainingService Tests', () => {
 			const pace = calculatePace(11.11);
 			expect(pace).to.equal('5:24');
 		});
+	});
+
+	describe("calculateElevation", () => {
+
+		it("should return elevation difference for normal altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 100 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 150 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 120 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(50);
+		});
+
+		it("should return 0 when all altitudes are equal", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});
+
+		it("should ignore undefined altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 100 },
+				{ latitude: 0, longitude: 0, timestamp: 0 }, // sin altitud
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 90 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(10);
+		});
+
+		it("should work with negative altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -50 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -10 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -30 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(40);
+		});
+
+		it("should return 0 when array has only one coordinate", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 123 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});
+
+		it("should never return negative elevation", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 50 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 50 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});						
+
 	});
 });
