@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { haversineDistance, calculateCalories, calculatePace } from '../../src/services/trainingService';
+import { haversineDistance, calculateCalories, calculatePace, calculateElevation, calculateAvgSpeed, calculateMaxSpeed } from '../../src/services/trainingService';
 
 describe('TrainingService Tests', () => {
 
@@ -183,4 +183,99 @@ describe('TrainingService Tests', () => {
 			expect(pace).to.equal('5:24');
 		});
 	});
+
+	describe("calculateElevation", () => {
+
+		it("should return elevation difference for normal altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 100 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 150 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 120 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(50);
+		});
+
+		it("should return 0 when all altitudes are equal", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 80 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});
+
+		it("should ignore undefined altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 100 },
+				{ latitude: 0, longitude: 0, timestamp: 0 }, // sin altitud
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 90 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(10);
+		});
+
+		it("should work with negative altitudes", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -50 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -10 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: -30 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(40);
+		});
+
+		it("should return 0 when array has only one coordinate", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 123 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});
+
+		it("should never return negative elevation", () => {
+			const coords = [
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 50 },
+				{ latitude: 0, longitude: 0, timestamp: 0, altitude: 50 }
+			];
+			const result = calculateElevation(coords);
+			expect(result).to.equal(0);
+		});						
+
+	});
+	 describe('calculateAvgSpeed', () => {
+    it('should calculate average speed correctly for 10 km in 1 hour', () => {
+      const avg = calculateAvgSpeed(10, 3600); // 10 km, 3600s
+      expect(avg).to.be.closeTo(10, 0.0001);
+    });
+
+    it('should calculate average speed correctly for 5 km in 30 minutes', () => {
+      const avg = calculateAvgSpeed(5, 1800); // 5 km, 1800s => 10 km/h
+      expect(avg).to.be.closeTo(10, 0.0001);
+    });
+
+    it('should return 0 when totalSeconds is 0', () => {
+      const avg = calculateAvgSpeed(5, 0);
+      expect(avg).to.equal(0);
+    });
+  });
+
+  describe('calculateMaxSpeed', () => {
+    it('should return the maximum speed from array', () => {
+      const speeds = [3.2, 7.5, 12.1, 9.9];
+      const max = calculateMaxSpeed(speeds);
+      expect(max).to.equal(12.1);
+    });
+
+    it('should return 0 for empty speeds array', () => {
+      const max = calculateMaxSpeed([]);
+      expect(max).to.equal(0);
+    });
+
+    it('should handle single-element array', () => {
+      const max = calculateMaxSpeed([5.5]);
+      expect(max).to.equal(5.5);
+    });
+  });
 });
