@@ -40,13 +40,23 @@ export const upload = multer({
 
 // Endpoint para registrar un nuevo usuario
 export const registerUser = async (req: Request, res: Response) => {
+	const userRepository = Database.getInstance().getRepository(User);
 	try {
 		console.log("➡️  /api/register hit. Body:", req.body);
 
 		const { username, email, name, lastname, age, password, gender, description } = req.body ?? {};
-		if (!username || !email || !password || !name || !lastname || !age) {
-			console.warn("⚠️  Missing required fields in body", { username, email, name, lastname, age, passwordPresent: Boolean(password) });
-			return res.status(400).json({ message: "Missing required fields: username, email, name, lastname, password" });
+		const requiredFields = {username, email, name, lastname, age, password, gender}
+		
+		const missingFields = Object.entries(requiredFields)
+			.filter(([key, value]) => !value)
+			.map(([key]) => key);
+
+		if (missingFields.length > 0) {
+			console.warn("⚠️  Missing required fields", missingFields);
+			return res.status(400).json({
+				message: "Missing requierd fields",
+				missing: missingFields
+			})
 		}
 
 		// Get profile photo path if uploaded
@@ -76,12 +86,17 @@ export const registerUser = async (req: Request, res: Response) => {
 
 // Endpoint para login de usuario
 export const loginUser = async (req: Request, res: Response) => {
+	const userRepository = Database.getInstance().getRepository(User);
+
 	try {
 		console.log("➡️  /api/login hit. Body:", req.body);
 		const { email, password } = req.body ?? {};
-		if (!email || !password) {
-			console.warn("⚠️  Missing required fields in query", { email, passwordPresent: Boolean(password) });
-			return res.status(400).json({ message: "Missing required fields: email, password" });
+		if (!email) {
+			console.warn("⚠️  Missing required email field in query");
+			return res.status(400).json({ message: "Missing required field: email" });
+		} else if (!password) {
+			console.warn("⚠️  Missing required password field in query");
+			return res.status(400).json({ message: "Missing required field: password" });
 		}
 
 		// TODO: Validar en DB si aplica. Por ahora respondemos éxito.
@@ -90,11 +105,9 @@ export const loginUser = async (req: Request, res: Response) => {
 			select: ['email', 'username', 'names', 'lastNames', 'age', 'password', 'profilePhoto', 'description', 'gender']
 		});
 		if (!user) {
-			console.warn("⚠️  User not found for email:", email);
-			return res.status(401).json({ message: "Invalid credentials" });
+			console.warn("⚠️  User email not found:", email);
+			return res.status(404).json({ message: "Invalid email" });
 		}
-		console.log("Contraseña ingresada:", password);
-		console.log("Hash guardado:", user.password);
 		const passwordMatch = await bcrypt.compare(password, user.password);
 		if (!passwordMatch) {
 			console.warn("⚠️  Invalid password for email:", email);
