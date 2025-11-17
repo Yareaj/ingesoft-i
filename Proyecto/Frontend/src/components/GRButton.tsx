@@ -15,7 +15,7 @@ interface GRButtonProps {
   leftIcon?: string;
 }
 
-export const grButton: React.FC<GRButtonProps> = ({
+export const GRButton: React.FC<GRButtonProps> = ({
 	label,
 	onPress,
 	variant = 'primary',
@@ -74,4 +74,4 @@ const styles = StyleSheet.create({
 	}
 });
 
-export default grButton;
+export default GRButton;

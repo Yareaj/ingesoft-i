@@ -11,7 +11,7 @@ interface UserData {
 }
 
 interface AuthContextType {
-	user: UserData | null;
+	user: UserData | null
 	setUser: (user: UserData | null) => void;
 	isAuthenticated: boolean;
 	logout: () => void;
@@ -19,7 +19,7 @@ interface AuthContextType {
 
 const authContext = createContext<AuthContextType | undefined>(undefined);
 
-export const authProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<UserData | null>(null);
 
 	const logout = () => {
