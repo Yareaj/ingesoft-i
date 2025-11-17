@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { describe, it } from 'mocha';
-import { haversineDistance, calculateCalories, calculatePace, calculateElevation } from '../../src/services/trainingService';
+import { haversineDistance, calculateCalories, calculatePace, calculateElevation, calculateAvgSpeed, calculateMaxSpeed } from '../../src/services/trainingService';
 
 describe('TrainingService Tests', () => {
 
@@ -244,4 +244,38 @@ describe('TrainingService Tests', () => {
 		});						
 
 	});
+	 describe('calculateAvgSpeed', () => {
+    it('should calculate average speed correctly for 10 km in 1 hour', () => {
+      const avg = calculateAvgSpeed(10, 3600); // 10 km, 3600s
+      expect(avg).to.be.closeTo(10, 0.0001);
+    });
+
+    it('should calculate average speed correctly for 5 km in 30 minutes', () => {
+      const avg = calculateAvgSpeed(5, 1800); // 5 km, 1800s => 10 km/h
+      expect(avg).to.be.closeTo(10, 0.0001);
+    });
+
+    it('should return 0 when totalSeconds is 0', () => {
+      const avg = calculateAvgSpeed(5, 0);
+      expect(avg).to.equal(0);
+    });
+  });
+
+  describe('calculateMaxSpeed', () => {
+    it('should return the maximum speed from array', () => {
+      const speeds = [3.2, 7.5, 12.1, 9.9];
+      const max = calculateMaxSpeed(speeds);
+      expect(max).to.equal(12.1);
+    });
+
+    it('should return 0 for empty speeds array', () => {
+      const max = calculateMaxSpeed([]);
+      expect(max).to.equal(0);
+    });
+
+    it('should handle single-element array', () => {
+      const max = calculateMaxSpeed([5.5]);
+      expect(max).to.equal(5.5);
+    });
+  });
 });
