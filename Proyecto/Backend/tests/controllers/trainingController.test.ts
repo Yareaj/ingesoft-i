@@ -1,0 +1,120 @@
+import { expect } from 'chai';
+import { describe, it, before } from 'mocha';
+
+// This test stubs appDataSource.getRepository before importing the controller
+describe('TrainingController.saveTraining', () => {
+  let controller: any;
+  let originalGetRepository: any;
+
+  before(() => {
+    // Build fake repositories with minimal behavior required by the controller
+    let coordId = 1;
+    let routeId = 1;
+    let trainingCounter = 1;
+
+    const fakeUser = {
+      email: 'test@local',
+      username: 'tester',
+      names: 'Test',
+      lastNames: 'User',
+      age: 30
+    };
+
+    const fakeRepos = {
+      User: {
+        findOne: async (opts: any) => {
+          const email = opts?.where?.email;
+          if (email === fakeUser.email) return fakeUser;
+          return null;
+        }
+      },
+      Coordinate: {
+        create: (obj: any) => ({ ...obj }),
+        save: async (coord: any) => {
+          coord.id = coordId++;
+          return coord;
+        }
+      },
+      Route: {
+        create: (obj: any) => ({ ...obj }),
+        save: async (route: any) => {
+          route.id = routeId++;
+          return route;
+        }
+      },
+      Training: {
+        create: (obj: any) => ({ ...obj }),
+        save: async (t: any) => {
+          t.counter = trainingCounter++;
+          return t;
+        }
+      }
+    };
+
+    // Patch appDataSource.getRepository to return appropriate fake repository
+    const ds = require('../../src/db_connection/config/dataSource');
+    // Save original getRepository to restore later
+    originalGetRepository = ds.appDataSource.getRepository;
+    ds.appDataSource.getRepository = (entity: any) => {
+      const name = entity && entity.name ? entity.name : String(entity);
+      if (name.includes('User')) return fakeRepos.User;
+      if (name.includes('Coordinate')) return fakeRepos.Coordinate;
+      if (name.includes('Route')) return fakeRepos.Route;
+      if (name.includes('Training')) return fakeRepos.Training;
+      // Fallback repository with basic create/save methods
+      return { create: (o: any) => ({ ...o }), save: async (o: any) => ({ ...o }) };
+    };
+
+    // Now import the controller after the stub is in place
+    controller = require('../../src/db_connection/controller/TrainingController');
+  });
+
+  // Restore original getRepository to avoid interfering with other tests
+  after(() => {
+    try {
+      const ds = require('../../src/db_connection/config/dataSource');
+      if (originalGetRepository) ds.appDataSource.getRepository = originalGetRepository;
+    } catch (e) {
+      // ignore restore errors in test environment
+    }
+  });
+
+  it('should save a training successfully', async () => {
+    const req: any = {
+      body: {
+        userEmail: 'test@local',
+        distance: 5000,
+        duration: '00:25:00',
+        avgSpeed: 12.0,
+        maxSpeed: 15.0,
+        rithm: 5.0,
+        calories: 300,
+        elevationGain: 10,
+        trainingType: 'Running',
+        route: [
+          { latitude: 4.6, longitude: -74.0, altitude: 2550 },
+          { latitude: 4.6001, longitude: -74.0002, altitude: 2552 }
+        ],
+        datetime: '2025-11-16T12:00:00Z'
+      }
+    };
+
+    const res: any = {
+      statusCode: 0,
+      body: null,
+      status(code: number) { this.statusCode = code; return this; },
+      json(obj: any) { this.body = obj; return this; }
+    };
+
+    await controller.saveTraining(req, res);
+
+    expect(res.statusCode).to.equal(201);
+    expect(res.body).to.have.property('message', 'Training saved successfully');
+    expect(res.body).to.have.property('training');
+    const t = res.body.training;
+    expect(t).to.have.property('distance');
+    expect(t.distance).to.equal(5000);
+    expect(t).to.have.property('avgSpeed');
+    expect(t.avgSpeed).to.equal(12.0);
+  });
+});
