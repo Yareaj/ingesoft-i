@@ -13,6 +13,8 @@ import FeedScreen from '../screens/FeedScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import TrainingScreen from '../screens/TrainingScreen';
 import ResumeTrainingScreen from '../screens/ResumeTrainingScreen';
+import GhostsScreen from '../screens/GhostsScreen';
+import GhostDetailScreen from '../screens/GhostDetailScreen';
 
 const tab = createBottomTabNavigator();
 const stack = createNativeStackNavigator();
@@ -50,6 +52,16 @@ function TabNavigator() {
 					tabBarIcon: ({ color }) => (
 						<Text style={{ fontSize: 24, color }}>🏠</Text>
 					)
+				}}
+			/>
+			<tab.Screen
+				name="Ghosts"
+				component={GhostsScreen}
+				options={{
+					tabBarIcon: ({ color }) => (
+						<Text style={{ fontSize: 24, color }}>👻</Text>
+					),
+					tabBarLabel: 'Ghosts'
 				}}
 			/>
 			<tab.Screen
@@ -99,6 +111,7 @@ export default function MainNavigator() {
 					<stack.Screen name="Main" component={TabNavigator} />
 					<stack.Screen name="Training" component={TrainingScreen} />
 					<stack.Screen name="ResumeTraining" component={ResumeTrainingScreen} />
+					<stack.Screen name="GhostDetail" component={GhostDetailScreen} />
 				</stack.Navigator>
 			</NavigationContainer>
 		</SafeAreaProvider>

@@ -35,6 +35,8 @@ export const calculateTraining = async (req: Request, res: Response) => {
 export const saveTraining = async (req: Request, res: Response) => {
 	try {
 		const { userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime } = req.body;
+		// isGhost may be provided by the client (1) or defaults to 0
+		const isGhost = req.body && req.body.isGhost ? Number(req.body.isGhost) : 0;
 
 		if (!userEmail) {
 			return res.status(400).json({ error: "userEmail is required" });
@@ -86,7 +88,7 @@ export const saveTraining = async (req: Request, res: Response) => {
 			calories: calories || 0,
 			elevationGain: elevationGain || 0,
 			trainingType: trainingType || 'Running',
-			isGhost: 0,
+			isGhost: isGhost ? 1 : 0,
 			user: user,
 			route: newRoute
 		});
@@ -105,7 +107,8 @@ export const saveTraining = async (req: Request, res: Response) => {
 				calories: training.calories,
 				elevationGain: training.elevationGain,
 				trainingType: training.trainingType,
-				datetime: training.datetime
+				datetime: training.datetime,
+				isGhost: training.isGhost
 			}
 		});
 	} catch (error) {
@@ -132,24 +135,114 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 		return res.json({
 			trainings: trainings.map(t => ({
 				counter: t.counter,
-				distance: t.route.distance,
+				distance: parseFloat(t.route.distance.toString()),
 				duration: t.duration,
-				avgSpeed: t.avgSpeed,
-				maxSpeed: t.maxSpeed,
-				rithm: t.rithm,
-				calories: t.calories,
-				elevationGain: t.elevationGain,
+				avgSpeed: parseFloat(t.avgSpeed.toString()),
+				maxSpeed: parseFloat(t.maxSpeed.toString()),
+				rithm: parseFloat(t.rithm.toString()),
+				calories: parseFloat(t.calories.toString()),
+				elevationGain: parseFloat(t.elevationGain.toString()),
 				trainingType: t.trainingType,
 				datetime: t.datetime,
+				isGhost: t.isGhost ?? 0,
 				route: t.route?.coordinates.map(c => ({
-					latitude: c.latitude,
-					longitude: c.longitude,
-					altitude: c.altitude
+					latitude: parseFloat(c.latitude.toString()),
+					longitude: parseFloat(c.longitude.toString()),
+					altitude: parseFloat(c.altitude.toString())
 				}))
 			}))
 		});
 	} catch (error) {
 		console.error("Error getting trainings:", error);
 		return res.status(500).json({ error: "Error getting trainings" });
+	}
+};
+
+export const replaceGhost = async (req: Request, res: Response) => {
+	try {
+		const { oldGhostCounter, userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime } = req.body;
+
+		if (!oldGhostCounter || !userEmail) {
+			return res.status(400).json({ error: "oldGhostCounter and userEmail are required" });
+		}
+
+		// Find the old ghost training
+		const oldGhost = await trainingRepository.findOne({
+			where: { counter: oldGhostCounter, userEmail: userEmail, isGhost: 1 }
+		});
+
+		if (!oldGhost) {
+			return res.status(404).json({ error: "Old ghost training not found" });
+		}
+
+		// Update old ghost to be a regular training
+		oldGhost.isGhost = 0;
+		await trainingRepository.save(oldGhost);
+
+		// Create new ghost training (same logic as saveTraining)
+		const user = await userRepository.findOne({ where: { email: userEmail }});
+		if (!user) {
+			return res.status(404).json({ error: "User not found" });
+		}
+
+		// Create coordinates
+		const savedCoordinates: Coordinate[] = [];
+		if (route && Array.isArray(route)) {
+			for (const coord of route) {
+				const newCoordinate = coordinateRepository.create({
+					latitude: coord.latitude,
+					longitude: coord.longitude,
+					altitude: coord.altitude || 0
+				});
+				const savedCoord = await coordinateRepository.save(newCoordinate);
+				savedCoordinates.push(savedCoord);
+			}
+		}
+
+		// Create route
+		const newRoute = routeRepository.create({
+			distance: distance || 0,
+			coordinates: savedCoordinates
+		});
+		await routeRepository.save(newRoute);
+
+		// Create new ghost training
+		const newGhost = trainingRepository.create({
+			userEmail: userEmail,
+			routeId: newRoute.id,
+			datetime: datetime ? new Date(datetime) : new Date(),
+			duration: duration || "00:00:00",
+			rithm: rithm || 0,
+			maxSpeed: maxSpeed || avgSpeed || 0,
+			avgSpeed: avgSpeed || 0,
+			calories: calories || 0,
+			elevationGain: elevationGain || 0,
+			trainingType: trainingType || 'Running',
+			isGhost: 1,
+			user: user,
+			route: newRoute
+		});
+
+		await trainingRepository.save(newGhost);
+
+		return res.status(201).json({
+			message: "Ghost replaced successfully",
+			newGhost: {
+				counter: newGhost.counter,
+				distance: newRoute.distance,
+				duration: newGhost.duration,
+				avgSpeed: newGhost.avgSpeed,
+				maxSpeed: newGhost.maxSpeed,
+				rithm: newGhost.rithm,
+				calories: newGhost.calories,
+				elevationGain: newGhost.elevationGain,
+				trainingType: newGhost.trainingType,
+				datetime: newGhost.datetime,
+				isGhost: newGhost.isGhost
+			}
+		});
+	} catch (error) {
+		console.error("Error replacing ghost:", error);
+		return res.status(500).json({ error: "Error replacing ghost" });
 	}
 };

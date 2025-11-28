@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert, Modal, TextInput } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import GRButton from '../components/GRButton';
 import { theme } from '../config/designSystem';
@@ -59,6 +59,32 @@ export default function HomeScreen() {
 	const handleNewTraining = () => {
 		navigation.navigate('Training' as never);
 	};
+
+	const handleRecordGhost = () => {
+		// Open modal to select distance for Ghost recording
+		setShowGhostModal(true);
+	};
+
+	// Modal state & input
+	const [showGhostModal, setShowGhostModal] = useState(false);
+	// default is 5 km
+	const [ghostDistanceInput, setGhostDistanceInput] = useState('5');
+
+	const handleCancelGhost = () => {
+		setShowGhostModal(false);
+	};
+
+	const handleConfirmRecordGhost = () => {
+		const distance = Number(ghostDistanceInput);
+		if (!distance || distance <= 0) {
+			Alert.alert('Invalid distance', 'Please provide a positive numeric distance in kilometers.');
+			return;
+		}
+		setShowGhostModal(false);
+		// Navigate to Training screen with ghost params so user can confirm and start
+		const typedNav = navigation as { navigate: (name: string, params?: { isGhost?: boolean; ghostDistanceKm?: number }) => void };
+		typedNav.navigate('Training', { isGhost: true, ghostDistanceKm: distance });
+	};
 	const handleSavedRoutes = () => Alert.alert('Saved Routes', 'Opening saved routes...');
 	const handleTrainingHistory = () => Alert.alert('Training History', 'Opening training history...');
 
@@ -110,11 +136,34 @@ export default function HomeScreen() {
 			{/* Action Buttons */}
 			<View style={styles.actionsWrapper}>
 				<GRButton label="🏃 Start New Training" variant="primary" onPress={handleNewTraining} />
+				<GRButton label="👻 Record Ghost" variant="secondary" onPress={handleRecordGhost} />
 				<View style={styles.row}>
 					<GRButton style={styles.flexButton} label="📍 Saved Routes" variant="secondary" onPress={handleSavedRoutes} />
 					<GRButton style={styles.flexButton} label="📊 History" variant="secondary" onPress={handleTrainingHistory} />
 				</View>
 			</View>
+
+			{/* Ghost recording modal */}
+			<Modal visible={showGhostModal} transparent animationType="slide">
+				<View style={styles.modalOverlay}>
+					<View style={styles.modalContent}>
+						<Text style={styles.modalTitle}>Record Ghost</Text>
+						<Text style={styles.modalText}>Enter distance (km) to save a ghost for</Text>
+						<TextInput
+							value={ghostDistanceInput}
+							onChangeText={setGhostDistanceInput}
+							keyboardType="numeric"
+							style={styles.modalInput}
+							placeholderTextColor="#bbb"
+							placeholder="5"
+						/>
+						<View style={styles.modalButtonsRow}>
+							<GRButton label="Cancel" variant="secondary" onPress={handleCancelGhost} style={styles.modalButton} />
+							<GRButton label="Record" variant="primary" onPress={handleConfirmRecordGhost} style={styles.modalButton} />
+						</View>
+					</View>
+				</View>
+			</Modal>
 		</SafeAreaView>
 	);
 }
@@ -160,5 +209,37 @@ const styles = StyleSheet.create({
 	loadingText: { color: theme.colors.textPrimary, fontSize: theme.typography.size.l },
 	actionsWrapper: { padding: theme.spacing.l, gap: theme.spacing.m },
 	row: { flexDirection: 'row', gap: theme.spacing.m },
-	flexButton: { flex: 1 }
+	flexButton: { flex: 1 },
+	modalOverlay: {
+		flex: 1,
+		backgroundColor: 'rgba(0,0,0,0.6)',
+		justifyContent: 'center',
+		alignItems: 'center'
+	},
+	modalContent: {
+		backgroundColor: theme.colors.surface,
+		padding: theme.spacing.xl,
+		borderRadius: theme.radii.m,
+		width: '90%'
+	},
+	modalTitle: {
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.xl,
+		fontWeight: theme.typography.weight.bold,
+		marginBottom: theme.spacing.s
+	},
+	modalText: {
+		color: theme.colors.textSecondary,
+		marginBottom: theme.spacing.m
+	},
+	modalInput: {
+		borderWidth: 1,
+		borderColor: theme.colors.border,
+		borderRadius: theme.radii.s,
+		padding: theme.spacing.s,
+		marginBottom: theme.spacing.m,
+		color: '#ffffff'
+	},
+	modalButtonsRow: { flexDirection: 'row', gap: theme.spacing.m },
+	modalButton: { flex: 1 }
 });

@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import * as path from "path";
 import { getFirstUser, registerUser, loginUser, upload } from "./db_connection/controller/UserController";
 import { verifyGoogleToken, exchangeCodeForToken } from './db_connection/controller/AuthController';
-import { saveTraining, getUserTrainings, calculateTraining } from "./db_connection/controller/TrainingController";
+import { saveTraining, getUserTrainings, calculateTraining, replaceGhost } from "./db_connection/controller/TrainingController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -42,6 +42,7 @@ Database.initialize()
 		// Endpoints de training
 		app.post("/api/trainings/calculate", calculateTraining);
 		app.post("/api/trainings", saveTraining);
+		app.post("/api/trainings/replace-ghost", replaceGhost);
 		app.get("/api/trainings/:userEmail", getUserTrainings);
 
 		app.listen(PORT, () => {

@@ -19,6 +19,10 @@ interface RouteParams {
 	pace: string;
 	route: Array<{ latitude: number; longitude: number; timestamp: number; altitude?: number }>;
 	userEmail: string;
+	isGhost?: boolean;
+	ghostCounter?: number;
+	ghostDistance?: number;
+	beatGhost?: boolean;
 }
 
 export default function ResumeTrainingScreen() {
@@ -37,36 +41,115 @@ export default function ResumeTrainingScreen() {
 		pace: params.pace || '0:00',
 		route: params.route || [],
 		userEmail: params.userEmail || 'test@example.com'
+		,isGhost: params.isGhost || false
 	};
 
 	const handleSave = async () => {
 		try {
-			const response = await fetch(apiUrl('/api/trainings'), {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					userEmail: trainingData.userEmail,
-					distance: trainingData.distance,
-					duration: trainingData.duration,
-					avgSpeed: trainingData.avgSpeed,
-					maxSpeed: trainingData.maxSpeed,
-					rithm: trainingData.rithm,
-					calories: trainingData.calories,
-					elevationGain: trainingData.elevationGain,
-					trainingType: 'Running',
-					route: trainingData.route,
-					datetime: new Date().toISOString()
-				})
-			});
-
-			if (response.ok) {
-				Alert.alert('Success', 'Training saved successfully');
-				navigation.reset({
-					index: 0,
-					routes: [{ name: 'Main' as never }]
+			// If user beat their ghost, replace the old ghost with this new training
+			if (params.beatGhost && params.ghostCounter) {
+				const response = await fetch(apiUrl('/api/trainings/replace-ghost'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						oldGhostCounter: params.ghostCounter,
+						userEmail: trainingData.userEmail,
+						distance: trainingData.distance,
+						duration: trainingData.duration,
+						avgSpeed: trainingData.avgSpeed,
+						maxSpeed: trainingData.maxSpeed,
+						rithm: trainingData.rithm,
+						calories: trainingData.calories,
+						elevationGain: trainingData.elevationGain,
+						trainingType: 'Running',
+						route: trainingData.route,
+						datetime: new Date().toISOString()
+					})
 				});
-			} else {
-				Alert.alert('Error', 'Failed to save training');
+
+				if (response.ok) {
+					Alert.alert(
+						'🎉 New Record!', 
+						`You got a new record in the distance ${(params.ghostDistance || 0).toFixed(2)} km!`,
+						[{
+							text: 'OK',
+							onPress: () => navigation.reset({
+								index: 0,
+								routes: [{ name: 'Main' as never }]
+							})
+						}]
+					);
+				} else {
+					Alert.alert('Error', 'Failed to save new ghost record');
+				}
+			} 
+			// If user didn't beat ghost but was racing, save as normal training
+			else if (params.ghostCounter && !params.beatGhost) {
+				const response = await fetch(apiUrl('/api/trainings'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						userEmail: trainingData.userEmail,
+						distance: trainingData.distance,
+						duration: trainingData.duration,
+						avgSpeed: trainingData.avgSpeed,
+						maxSpeed: trainingData.maxSpeed,
+						rithm: trainingData.rithm,
+						calories: trainingData.calories,
+						elevationGain: trainingData.elevationGain,
+						trainingType: 'Running',
+						route: trainingData.route,
+						datetime: new Date().toISOString(),
+						isGhost: 0 // Save as regular training
+					})
+				});
+
+				if (response.ok) {
+					Alert.alert(
+						'Keep training!', 
+						'You almost beat yourself. Keep pushing!',
+						[{
+							text: 'OK',
+							onPress: () => navigation.reset({
+								index: 0,
+								routes: [{ name: 'Main' as never }]
+							})
+						}]
+					);
+				} else {
+					Alert.alert('Error', 'Failed to save training');
+				}
+			}
+			// Regular training save (not racing against ghost)
+			else {
+				const response = await fetch(apiUrl('/api/trainings'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						userEmail: trainingData.userEmail,
+						distance: trainingData.distance,
+						duration: trainingData.duration,
+						avgSpeed: trainingData.avgSpeed,
+						maxSpeed: trainingData.maxSpeed,
+						rithm: trainingData.rithm,
+						calories: trainingData.calories,
+						elevationGain: trainingData.elevationGain,
+						trainingType: 'Running',
+						route: trainingData.route,
+						datetime: new Date().toISOString(),
+						isGhost: trainingData.isGhost ? 1 : 0
+					})
+				});
+
+				if (response.ok) {
+					Alert.alert('Success', 'Training saved successfully');
+					navigation.reset({
+						index: 0,
+						routes: [{ name: 'Main' as never }]
+					});
+				} else {
+					Alert.alert('Error', 'Failed to save training');
+				}
 			}
 		} catch (error) {
 			console.error('Error saving training:', error);
@@ -99,6 +182,17 @@ export default function ResumeTrainingScreen() {
 					<Text style={commonStyles.headerText}>🎉 Training Completed!</Text>
 				</View>
 
+				{/* Ghost Race Result Banner */}
+				{params.ghostCounter && (
+					<View style={params.beatGhost ? styles.victoryBanner : styles.encouragementBanner}>
+						<Text style={styles.bannerText}>
+							{params.beatGhost 
+								? `🏆 New Record! You beat your ghost!` 
+								: `💪 Keep training, you almost beat yourself!`}
+						</Text>
+					</View>
+				)}
+
 				{/* ===== MAPA CON RUTA COMPLETA ===== */}
 				<View style={styles.mapContainer}>
 					<MapView
@@ -123,6 +217,11 @@ export default function ResumeTrainingScreen() {
 
 				{/* ===== ESTADÍSTICAS PRINCIPALES ===== */}
 				<View style={styles.statsSection}>
+					{trainingData.isGhost && (
+						<View style={{ padding: theme.spacing.l, alignItems: 'center' }}>
+							<Text style={{ color: theme.colors.primary, fontWeight: theme.typography.weight.bold }}>👻 Ghost Training</Text>
+						</View>
+					)}
 					<View style={styles.mainStatsRow}>
 						<View style={styles.mainStatCard}>
 							<Text style={styles.mainStatValue}>{trainingData.distance.toFixed(2)}</Text>
@@ -187,6 +286,28 @@ export default function ResumeTrainingScreen() {
 }
 
 const styles = StyleSheet.create({
+	victoryBanner: {
+		backgroundColor: '#4CAF50',
+		padding: theme.spacing.l,
+		marginHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.m,
+		borderRadius: theme.radii.m,
+		alignItems: 'center'
+	},
+	encouragementBanner: {
+		backgroundColor: '#FF9800',
+		padding: theme.spacing.l,
+		marginHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.m,
+		borderRadius: theme.radii.m,
+		alignItems: 'center'
+	},
+	bannerText: {
+		color: '#FFFFFF',
+		fontSize: theme.typography.size.l,
+		fontWeight: theme.typography.weight.bold,
+		textAlign: 'center'
+	},
 	mapContainer: {
 		height: 250,
 		margin: theme.spacing.l,
