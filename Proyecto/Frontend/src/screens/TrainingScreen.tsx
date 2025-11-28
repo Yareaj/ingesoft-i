@@ -28,6 +28,7 @@ interface TrainingScreenProps {
 export default function TrainingScreen({ userEmail = 'test@example.com' }: TrainingScreenProps) {
 	const navigation = useNavigation();
 	const navRoute = useRoute();
+	const mapRef = useRef<MapView | null>(null);
 	const [isTracking, setIsTracking] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
 	const [showPauseModal, setShowPauseModal] = useState(false);
@@ -36,37 +37,39 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 	const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
 	const [route, setRoute] = useState<Coordinate[]>([]);
 	const [totalDistanceMeters, setTotalDistanceMeters] = useState(0);
-	const [autoStopped, setAutoStopped] = useState(false);
-	
+	const totalDistanceRef = useRef<number>(0);
+
 	// Ghost racing state
 	const [ghostPosition, setGhostPosition] = useState<Coordinate | null>(null);
 	const [ghostElapsedDistance, setGhostElapsedDistance] = useState(0);
 	const [lastAnnouncementDistance, setLastAnnouncementDistance] = useState(0);
 	const [lastAnnouncementGhostDistance, setLastAnnouncementGhostDistance] = useState(0);
 	const [lastAnnouncementTime, setLastAnnouncementTime] = useState(0);
-	
+
 	// Refs for stable closures
 	const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
 	const autoStoppedRef = useRef<boolean>(false);
-	
-	type NavParams = { 
-		isGhost?: boolean; 
+
+	type NavParams = {
+		isGhost?: boolean;
 		ghostDistanceKm?: number;
 		runAgainstGhost?: boolean;
 		ghostTraining?: any;
 	} | undefined;
 	const navParams = (navRoute.params as NavParams) || {};
-	
+
 	// Ghost training data
 	const ghostTraining = navParams?.runAgainstGhost ? navParams.ghostTraining : null;
 	const ghostRoute = ghostTraining?.route || [];
 	const ghostDurationSeconds = ghostTraining?.duration ? parseDuration(ghostTraining.duration) : 0;
 	const ghostDistance = ghostTraining?.distance || 0;
-	
+
 	// Target distance for auto-stop: either from ghost recording or ghost racing
-	const targetDistanceMeters = ghostTraining 
-		? (ghostDistance * 1000) // Racing against ghost: use ghost's distance
-		: (Number(navParams?.ghostDistanceKm || 0) * 1000); // Recording ghost: use input distance
+	// When racing against a ghost, use the ghost's recorded distance
+	// Otherwise use the input `ghostDistanceKm` parameter (in kilometers)
+	const targetDistanceMeters = ghostTraining
+		? (ghostDistance * 1000)
+		: (Number(navParams?.ghostDistanceKm || 0) * 1000);
 
 	// Parse HH:MM:SS to seconds
 	function parseDuration(durationStr: string): number {
@@ -75,10 +78,10 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 	}
 
 	// Audio announcement function
-	const announceProgress = (userDistance: number, ghostDistance: number) => {
-		const difference = Math.round(userDistance - ghostDistance);
+	const announceProgress = (userDistance: number, ghostDistParam: number) => {
+		const difference = Math.round(userDistance - ghostDistParam);
 		const absDifference = Math.abs(difference);
-		
+
 		let message = '';
 		if (difference > 0) {
 			message = `You are ${absDifference} meters ahead of your ghost`;
@@ -87,7 +90,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 		} else {
 			message = `You are tied with your ghost`;
 		}
-		
+
 		Speech.speak(message, {
 			language: 'en-US',
 			pitch: 1.0,
@@ -107,31 +110,38 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 
 	// Check for audio announcements during ghost race
 	useEffect(() => {
-		if (!ghostTraining || !isTracking || isPaused) return;
+		if (!ghostTraining || !isTracking || isPaused) {return;}
 
-		const ANNOUNCEMENT_INTERVAL = 100; // 100 meters (temporal para pruebas)
-		const MIN_TIME_BETWEEN_ANNOUNCEMENTS = 15; // 15 seconds
-		const targetDistance = ghostDistance * 1000; // convert to meters
-		const tenPercent = targetDistance * 0.1; // 10% of total distance
-		
+		// Announcement settings
+		// ANNOUNCEMENT_INTERVAL: meters threshold for announcements (used for testing)
+		const ANNOUNCEMENT_INTERVAL = 100;
+		// MIN_TIME_BETWEEN_ANNOUNCEMENTS: seconds between announcements
+		const MIN_TIME_BETWEEN_ANNOUNCEMENTS = 15;
+		// Convert ghost distance (km) to meters
+		const targetDistance = ghostDistance * 1000;
+		// Ten percent of total distance
+		const tenPercent = targetDistance * 0.1;
+
 		// Announce every 100m or 10% (whichever comes first)
 		const announcementThreshold = Math.min(ANNOUNCEMENT_INTERVAL, tenPercent);
-		
+
 		// Calculate distance traveled since last announcement for both user and ghost
 		const userDistanceSinceAnnouncement = totalDistanceMeters - lastAnnouncementDistance;
 		const ghostDistanceSinceAnnouncement = ghostElapsedDistance - lastAnnouncementGhostDistance;
-		
+
 		// Calculate time since last announcement
+		// Calculate time since last announcement (in seconds)
 		const currentTime = Date.now();
-		const timeSinceLastAnnouncement = (currentTime - lastAnnouncementTime) / 1000; // convert to seconds
-		
+		const timeSinceLastAnnouncement = (currentTime - lastAnnouncementTime) / 1000;
+
 		// Check if either user OR ghost has traveled the threshold distance
-		const shouldAnnounceByDistance = userDistanceSinceAnnouncement >= announcementThreshold || 
-		                                  ghostDistanceSinceAnnouncement >= announcementThreshold;
-		
+		// Check if either user OR ghost has traveled the threshold distance
+		const shouldAnnounceByDistance = userDistanceSinceAnnouncement >= announcementThreshold ||
+											ghostDistanceSinceAnnouncement >= announcementThreshold;
+
 		// Check if enough time has passed (or if this is the first announcement)
 		const shouldAnnounceByTime = lastAnnouncementTime === 0 || timeSinceLastAnnouncement >= MIN_TIME_BETWEEN_ANNOUNCEMENTS;
-		
+
 		// Announce if both conditions are met
 		if (shouldAnnounceByDistance && shouldAnnounceByTime) {
 			announceProgress(totalDistanceMeters, ghostElapsedDistance);
@@ -143,15 +153,16 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 
 	// Ghost simulation: update ghost position based on elapsed time
 	useEffect(() => {
-		if (!ghostTraining || !isTracking || isPaused || ghostRoute.length === 0) return;
+		if (!ghostTraining || !isTracking || isPaused || ghostRoute.length === 0) {return;}
 
 		// Calculate ghost speed (meters per second)
 		const ghostSpeedMps = (ghostDistance * 1000) / ghostDurationSeconds;
-		
+
 		const interval = setInterval(() => {
 			setGhostElapsedDistance(prev => {
-				const newDistance = prev + ghostSpeedMps; // advance 1 meter per second approximately
-				
+				// advance by ghostSpeedMps meters (approx meters per second)
+				const newDistance = prev + ghostSpeedMps;
+
 				// Find position along ghost route based on distance
 				let accumulatedDist = 0;
 				for (let i = 0; i < ghostRoute.length - 1; i++) {
@@ -167,7 +178,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 					}
 					accumulatedDist += segmentDist;
 				}
-				
+
 				return newDistance;
 			});
 		}, 1000);
@@ -182,7 +193,6 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 			if (isTracking && !isPaused) {
 				// reset autoStopped refs when we (re)start
 				autoStoppedRef.current = false;
-				setAutoStopped(false);
 
 				const sub = await Location.watchPositionAsync(
 					{
@@ -200,28 +210,27 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						};
 
 						// Append to route and compute incremental distance.
+						// Append to route and compute incremental distance.
 						setRoute(prev => {
 							const newRoute = [...prev, newPoint];
 							const prevPoint = prev[prev.length - 1];
 							if (prevPoint) {
 								const d = haversineMeters(prevPoint, newPoint);
-								setTotalDistanceMeters(prevTotal => {
-									const newTotal = prevTotal + d;
-
-									// Auto-stop logic using ref to avoid stale closures
-									if (targetDistanceMeters > 0 && newTotal >= targetDistanceMeters && !autoStoppedRef.current) {
-										autoStoppedRef.current = true;
-										setAutoStopped(true);
-										// stop tracking and finish the training
-										setIsTracking(false);
-										// slight delay to let UI update before finishing
-										setTimeout(() => {
-											// ensure we only finish if the component is still mounted
-											if (mounted) handleFinish();
-										}, 100);
-									}
-									return newTotal;
-								});
+								// compute new total using ref to avoid deep nested callbacks
+								const newTotal = totalDistanceRef.current + d;
+								totalDistanceRef.current = newTotal;
+								setTotalDistanceMeters(newTotal);
+								// Auto-stop logic using ref to avoid stale closures
+								if (targetDistanceMeters > 0 && newTotal >= targetDistanceMeters && !autoStoppedRef.current) {
+									autoStoppedRef.current = true;
+									// stop tracking and finish the training
+									setIsTracking(false);
+									// slight delay to let UI update before finishing
+									setTimeout(() => {
+										// ensure we only finish if the component is still mounted
+										if (mounted) { handleFinish(); }
+									}, 100);
+								}
 							}
 							return newRoute;
 						});
@@ -270,6 +279,15 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 		}
 		const location = await Location.getCurrentPositionAsync({});
 		setCurrentLocation(location);
+		// center map when starting
+		if (mapRef.current && (mapRef.current as any).animateToRegion) {
+			(mapRef.current as any).animateToRegion({
+				latitude: location.coords.latitude,
+				longitude: location.coords.longitude,
+				latitudeDelta: 0.01,
+				longitudeDelta: 0.01
+			}, 500);
+		}
 		const startPoint: Coordinate = {
 			latitude: location.coords.latitude,
 			longitude: location.coords.longitude,
@@ -279,15 +297,15 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 		// re-init route/distance/duration and tracking flags
 		setRoute([startPoint]);
 		setTotalDistanceMeters(0);
+		totalDistanceRef.current = 0;
 		setDuration(0);
 		setLastAnnouncementDistance(0);
 		setLastAnnouncementGhostDistance(0);
 		setLastAnnouncementTime(0);
 		autoStoppedRef.current = false;
-		setAutoStopped(false);
 		setIsTracking(true);
 		setIsPaused(false);
-		
+
 		// Initialize ghost position if racing against ghost
 		if (ghostTraining && ghostRoute.length > 0) {
 			setGhostPosition(ghostRoute[0]);
@@ -332,6 +350,12 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 			return;
 		}
 		try {
+			// fit map to route before calculating and navigating
+			const routeCoords = route.filter(p => !p.isPause).map(p => ({ latitude: p.latitude, longitude: p.longitude }));
+			if (mapRef.current && routeCoords.length > 0 && (mapRef.current as any).fitToCoordinates) {
+				(mapRef.current as any).fitToCoordinates(routeCoords, { edgePadding: { top: 80, right: 80, bottom: 120, left: 80 }, animated: true });
+				await new Promise(resolve => setTimeout(resolve, 700));
+			}
 			const response = await fetch(apiUrl('/api/trainings/calculate'), {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -342,7 +366,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 			});
 			if (response.ok) {
 				const stats = await response.json();
-				
+
 				// If racing against ghost, compare performance
 				let beatGhost = false;
 				let ghostInfo = null;
@@ -351,7 +375,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 					// Parse ghost duration (HH:MM:SS) to seconds
 					const ghostDurationSec = ghostDurationSeconds;
 					const userDurationSec = duration;
-					
+
 					// User beat the ghost if they completed the distance in less time
 					beatGhost = userDurationSec < ghostDurationSec;
 					ghostInfo = {
@@ -360,7 +384,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						beatGhost: beatGhost
 					};
 				}
-				
+
 				navigation.reset({
 					index: 1,
 					routes: [
@@ -386,6 +410,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 	return (
 		<SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
 			<MapView
+				ref={mapRef}
 				style={styles.map}
 				provider={PROVIDER_GOOGLE}
 				initialRegion={{
@@ -406,7 +431,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						lineDashPattern={[10, 5]}
 					/>
 				)}
-				
+
 				{/* Current user route - orange color */}
 				{route.length > 1 && (
 					<Polyline
@@ -415,7 +440,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						strokeWidth={4}
 					/>
 				)}
-				
+
 				{/* Ghost marker - white pin */}
 				{ghostTraining && ghostPosition && (
 					<Marker
@@ -425,7 +450,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						<GhostMarker />
 					</Marker>
 				)}
-				
+
 				{/* Current user marker - orange pin */}
 				{currentLocation && (
 					<Marker
@@ -438,7 +463,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 					/>
 				)}
 			</MapView>
-			
+
 			{/* Racing info banner */}
 			{ghostTraining && isTracking && (
 				<View style={styles.racingBanner}>
@@ -447,7 +472,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 					</Text>
 				</View>
 			)}
-			
+
 			<View style={styles.statsPanel}>
 				<View style={styles.statItem}>
 					<Text style={styles.statLabel}>Duration</Text>

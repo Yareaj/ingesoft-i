@@ -5,6 +5,8 @@ import { User } from "../entity/User";
 import { Route } from "../entity/Route";
 import { Coordinate } from "../entity/Coordinate";
 import { calculateTrainingStats, calculatePace } from "../../services/trainingService";
+import * as fs from 'fs';
+import * as path from 'path';
 
 const trainingRepository = appDataSource.getRepository(Training);
 const userRepository = appDataSource.getRepository(User);
@@ -76,6 +78,42 @@ export const saveTraining = async (req: Request, res: Response) => {
 		});
 		await routeRepository.save(newRoute);
 
+		// Handle training image (base64) and save to disk if provided
+		let publicImageUrl: string | null = null;
+		try {
+			const rawImage = req.body.trainingImage;
+			const imageName = req.body.imageName;
+			if (rawImage && typeof rawImage === 'string') {
+				const matches = rawImage.match(/^data:(image\/(\w+));base64,(.+)$/);
+				let ext = 'png';
+				let base64Data = rawImage;
+				if (matches && matches.length === 4) {
+					ext = matches[2];
+					base64Data = matches[3];
+				} else if (rawImage.startsWith('data:')) {
+					const parts = rawImage.split(',');
+					base64Data = parts[1] || parts[0];
+				}
+
+				let fileBase = (imageName && typeof imageName === 'string' && imageName.trim().length > 0) ? imageName.trim() : `training_${Date.now()}`;
+				// sanitize
+				fileBase = fileBase.replace(/[^a-zA-Z0-9-_]/g, '_');
+				let fileName = `${fileBase}.${ext}`;
+				const imagesDir = path.join(__dirname, '../../../Database/db_images');
+				await fs.promises.mkdir(imagesDir, { recursive: true });
+				let filePath = path.join(imagesDir, fileName);
+				if (fs.existsSync(filePath)) {
+					fileName = `${fileBase}_${Date.now()}.${ext}`;
+					filePath = path.join(imagesDir, fileName);
+				}
+				await fs.promises.writeFile(filePath, base64Data, 'base64');
+				publicImageUrl = `/images/${fileName}`;
+			}
+		} catch (err) {
+			console.error('Error saving training image:', err);
+			publicImageUrl = null;
+		}
+
 		// Crear entrenamiento
 		const training = trainingRepository.create({
 			userEmail: userEmail,
@@ -87,6 +125,7 @@ export const saveTraining = async (req: Request, res: Response) => {
 			avgSpeed: avgSpeed || 0,
 			calories: calories || 0,
 			elevationGain: elevationGain || 0,
+			image: publicImageUrl ?? undefined,
 			trainingType: trainingType || 'Running',
 			isGhost: isGhost ? 1 : 0,
 			user: user,
@@ -108,7 +147,9 @@ export const saveTraining = async (req: Request, res: Response) => {
 				elevationGain: training.elevationGain,
 				trainingType: training.trainingType,
 				datetime: training.datetime,
-				isGhost: training.isGhost
+				isGhost: training.isGhost,
+				route: savedCoordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude, altitude: c.altitude })),
+				image: training.image || null
 			}
 		});
 	} catch (error) {
@@ -149,7 +190,8 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 					latitude: parseFloat(c.latitude.toString()),
 					longitude: parseFloat(c.longitude.toString()),
 					altitude: parseFloat(c.altitude.toString())
-				}))
+				})),
+				image: t.image || null
 			}))
 		});
 	} catch (error) {

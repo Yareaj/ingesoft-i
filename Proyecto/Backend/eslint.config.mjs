@@ -98,7 +98,14 @@ export default [
 	{
 		files: ["tests/**/*.test.ts", "tests/**/*.spec.ts"],
 		rules: {
-			"@typescript-eslint/no-unused-expressions": "off"
+			"@typescript-eslint/no-unused-expressions": "off",
+			"@typescript-eslint/no-explicit-any": "off",
+			"@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+			"no-inline-comments": "off",
+			"no-trailing-spaces": "off",
+			"@typescript-eslint/no-require-imports": "off",
+			// Allow shadowing in tests to avoid nested variable collisions in test mocks
+			"no-shadow": "off"
 		}
 	}
 ];

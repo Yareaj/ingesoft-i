@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TextInput, Image } from 'react-native';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -28,7 +28,12 @@ interface RouteParams {
 export default function ResumeTrainingScreen() {
 	const route = useRoute();
 	const navigation = useNavigation();
-	const params = route.params as RouteParams || {};
+	const params = (route.params as RouteParams) || {};
+	type MapWithSnapshot = MapView & { takeSnapshot?: (opts: { width: number; height: number; format: string; result: string }) => Promise<string> };
+	const mapRef = useRef<MapWithSnapshot | null>(null);
+	const [imageName, setImageName] = useState('');
+	const [trainingName, setTrainingName] = useState('');
+	const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null);
 
 	const trainingData: RouteParams = {
 		distance: params.distance || 0,
@@ -40,12 +45,24 @@ export default function ResumeTrainingScreen() {
 		elevationGain: params.elevationGain || 0,
 		pace: params.pace || '0:00',
 		route: params.route || [],
-		userEmail: params.userEmail || 'test@example.com'
-		,isGhost: params.isGhost || false
+ 		userEmail: params.userEmail || 'test@example.com',
+ 		isGhost: params.isGhost || false
 	};
 
 	const handleSave = async () => {
 		try {
+			// Attempt to capture a snapshot of the map (base64 PNG)
+			let snapshotBase64: string | undefined = undefined;
+			try {
+				if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
+					const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
+					if (snap) {
+						snapshotBase64 = `data:image/png;base64,${snap}`;
+					}
+				}
+			} catch (err) {
+				console.warn('Map snapshot failed:', err);
+			}
 			// If user beat their ghost, replace the old ghost with this new training
 			if (params.beatGhost && params.ghostCounter) {
 				const response = await fetch(apiUrl('/api/trainings/replace-ghost'), {
@@ -63,28 +80,32 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						imageName: imageName || undefined,
 						datetime: new Date().toISOString()
 					})
 				});
 
 				if (response.ok) {
+					const data = await response.json();
+					if (data?.newGhost?.image) {
+						setSavedImageUrl(data.newGhost.image);
+					}
 					Alert.alert(
-						'🎉 New Record!', 
+						'🎉 New Record!',
 						`You got a new record in the distance ${(params.ghostDistance || 0).toFixed(2)} km!`,
-						[{
-							text: 'OK',
-							onPress: () => navigation.reset({
-								index: 0,
-								routes: [{ name: 'Main' as never }]
-							})
-						}]
+						[
+							{
+								text: 'OK',
+								onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] })
+							}
+						]
 					);
 				} else {
 					Alert.alert('Error', 'Failed to save new ghost record');
 				}
-			} 
-			// If user didn't beat ghost but was racing, save as normal training
-			else if (params.ghostCounter && !params.beatGhost) {
+			} else if (params.ghostCounter && !params.beatGhost) {
+				// If user didn't beat ghost but was racing, save as normal training
 				const response = await fetch(apiUrl('/api/trainings'), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -99,29 +120,27 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						imageName: imageName || undefined,
 						datetime: new Date().toISOString(),
-						isGhost: 0 // Save as regular training
+						// Save as regular training
+						isGhost: 0
 					})
 				});
 
 				if (response.ok) {
-					Alert.alert(
-						'Keep training!', 
-						'You almost beat yourself. Keep pushing!',
-						[{
-							text: 'OK',
-							onPress: () => navigation.reset({
-								index: 0,
-								routes: [{ name: 'Main' as never }]
-							})
-						}]
-					);
+					const data = await response.json();
+					if (data?.training?.image) {
+						setSavedImageUrl(data.training.image);
+					}
+					Alert.alert('Keep training!', 'You almost beat yourself. Keep pushing!', [
+						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
+					]);
 				} else {
 					Alert.alert('Error', 'Failed to save training');
 				}
-			}
-			// Regular training save (not racing against ghost)
-			else {
+			} else {
+				// Regular training save (not racing against ghost)
 				const response = await fetch(apiUrl('/api/trainings'), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -136,24 +155,28 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						imageName: imageName || undefined,
 						datetime: new Date().toISOString(),
 						isGhost: trainingData.isGhost ? 1 : 0
 					})
 				});
 
 				if (response.ok) {
-					Alert.alert('Success', 'Training saved successfully');
-					navigation.reset({
-						index: 0,
-						routes: [{ name: 'Main' as never }]
-					});
+					const data = await response.json();
+					if (data?.training?.image) {
+						setSavedImageUrl(data.training.image);
+					}
+					Alert.alert('Success', 'Training saved successfully', [
+						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
+					]);
 				} else {
 					Alert.alert('Error', 'Failed to save training');
 				}
 			}
 		} catch (error) {
 			console.error('Error saving training:', error);
-			Alert.alert('Error', 'No se pudo conectar con el servidor');
+			Alert.alert('Error', 'Could not connect to the server');
 		}
 	};
 
@@ -186,16 +209,17 @@ export default function ResumeTrainingScreen() {
 				{params.ghostCounter && (
 					<View style={params.beatGhost ? styles.victoryBanner : styles.encouragementBanner}>
 						<Text style={styles.bannerText}>
-							{params.beatGhost 
-								? `🏆 New Record! You beat your ghost!` 
+							{params.beatGhost
+								? `🏆 New Record! You beat your ghost!`
 								: `💪 Keep training, you almost beat yourself!`}
 						</Text>
 					</View>
 				)}
 
-				{/* ===== MAPA CON RUTA COMPLETA ===== */}
+				{/* ===== FULL ROUTE MAP ===== */}
 				<View style={styles.mapContainer}>
 					<MapView
+						ref={mapRef}
 						style={styles.map}
 						provider={PROVIDER_GOOGLE}
 						initialRegion={{
@@ -215,7 +239,7 @@ export default function ResumeTrainingScreen() {
 					</MapView>
 				</View>
 
-				{/* ===== ESTADÍSTICAS PRINCIPALES ===== */}
+				{/* ===== MAIN STATISTICS ===== */}
 				<View style={styles.statsSection}>
 					{trainingData.isGhost && (
 						<View style={{ padding: theme.spacing.l, alignItems: 'center' }}>
@@ -236,7 +260,7 @@ export default function ResumeTrainingScreen() {
 
 					<View style={styles.divider} />
 
-					{/* ===== ESTADÍSTICAS SECUNDARIAS ===== */}
+					{/* ===== SECONDARY STATISTICS ===== */}
 					<View style={styles.secondaryStatsGrid}>
 						<View style={styles.secondaryStatCard}>
 							<Text style={styles.secondaryStatLabel}>Pace</Text>
@@ -264,17 +288,49 @@ export default function ResumeTrainingScreen() {
 					</View>
 				</View>
 
-				{/* ===== BOTONES DE ACCIÓN ===== */}
+				{/* ===== ACTION BUTTONS ===== */}
+				<View style={styles.nameInputSection}>
+					<Text style={styles.nameInputLabel}>Training name (optional)</Text>
+					<TextInput
+						style={styles.nameInput}
+						placeholder="e.g. Morning run"
+						placeholderTextColor={theme.colors.textSecondary}
+						value={trainingName}
+						onChangeText={setTrainingName}
+						maxLength={100}
+					/>
+					<Text style={styles.nameInputHint}>
+						{trainingName.trim() ? `Will be saved as: "${trainingName.trim()}"` : 'If you don\'t enter a name, it will be assigned automatically'}
+					</Text>
+
+					<Text style={[styles.nameInputLabel, { marginTop: 12 }]}>Image filename (without extension)</Text>
+					<TextInput
+						style={styles.nameInput}
+						placeholder="e.g. morning_run_2025-11-28"
+						placeholderTextColor={theme.colors.textSecondary}
+						value={imageName}
+						onChangeText={setImageName}
+						maxLength={80}
+					/>
+					<Text style={styles.nameInputHint}>The provided name will be used as the image filename (PNG).</Text>
+					{savedImageUrl && (
+						<View style={{ marginTop: 12, alignItems: 'center' }}>
+							<Text style={{ marginBottom: 8 }}>Saved Image Preview:</Text>
+							<Image source={{ uri: savedImageUrl }} style={{ width: 200, height: 120, borderRadius: 8 }} />
+						</View>
+					)}
+				</View>
+
 				<View style={styles.actions}>
 					<GRButton
-						label="💾 Guardar Entrenamiento"
+						label="💾 Save Training"
 						variant="primary"
 						onPress={handleSave}
 						style={styles.actionButton}
 					/>
 
 					<GRButton
-						label="🗑️ Descartar"
+						label="🗑️ Discard"
 						variant="outline"
 						onPress={handleDiscard}
 						style={styles.actionButton}
@@ -385,5 +441,30 @@ const styles = StyleSheet.create({
 	},
 	actionButton: {
 		width: '100%'
+	},
+	nameInputSection: {
+		marginHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.l,
+		padding: theme.spacing.l,
+		backgroundColor: theme.colors.surface,
+		borderRadius: theme.radii.l
+	},
+	nameInputLabel: {
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.m,
+		marginBottom: theme.spacing.xs
+	},
+	nameInput: {
+		borderWidth: 1,
+		borderColor: theme.colors.border,
+		borderRadius: theme.radii.m,
+		padding: theme.spacing.s,
+		color: theme.colors.textPrimary,
+		backgroundColor: theme.colors.background
+	},
+	nameInputHint: {
+		color: theme.colors.textSecondary,
+		fontSize: theme.typography.size.s,
+		marginTop: theme.spacing.xs
 	}
 });

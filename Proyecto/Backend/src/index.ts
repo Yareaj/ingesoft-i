@@ -23,7 +23,10 @@ Database.initialize()
 
 		// Middlewares
 		app.use(cors());
-		app.use(express.json());
+		// Increase JSON and URL-encoded body size limits to allow image uploads (base64)
+		// Default is ~100kb; snapshots/base64 images may exceed that.
+		app.use(express.json({ limit: '10mb' }));
+		app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 		// Serve static images
 		app.use('/images', express.static(path.join(__dirname, '../../Database/db_images')));

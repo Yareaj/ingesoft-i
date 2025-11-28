@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS "Training" (
   "avgSpeed" DECIMAL(5,2) NOT NULL,
   "calories" DECIMAL(6,2) NOT NULL,
   "elevationGain" DECIMAL(5,2) NOT NULL,
+  "image" TEXT,
   "trainingType" VARCHAR(10) NOT NULL CHECK ("trainingType" IN ('Running','Cycling')),
   "isGhost" SMALLINT NOT NULL,
   "avgStride" DECIMAL(5,2),
