@@ -47,7 +47,16 @@ echo "Instalando dependencias del Frontend..."
 cd Proyecto/Frontend || { echo "No se encontro la carpeta del frontend."; exit 1; }
 npm install
 
-# 10) Levantar el servidor Backend (bloqueante, como en el .bat)
+# 10) Instalar expo-speech para anuncios de audio
+echo "Instalando expo-speech para anuncios de audio..."
+npm install expo-speech
+
+# 11) Volver a Database para crear ghost ficticio
+echo "Creando ghost ficticio de 10km..."
+cd ../Database || { echo "No se encontro la carpeta Database."; exit 1; }
+npx ts-node seed-ghost.ts diegoGo@runner.com
+
+# 12) Levantar el servidor Backend (bloqueante, como en el .bat)
 echo "Levantando el servidor Backend..."
 cd ../Backend || { echo "No se encontro la carpeta Backend."; exit 1; }
 npm start

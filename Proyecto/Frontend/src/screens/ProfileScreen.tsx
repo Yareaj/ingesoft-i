@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../config/commonStyles';
 import { theme } from '../config/designSystem';
-import { GRButton } from '../components/GRButton';
+import GRButton from '../components/GRButton';
 import { useAuth } from '../context/AuthContext';
 import { apiUrl } from '../config/api';
 import logo from '../../assets/logo.png';

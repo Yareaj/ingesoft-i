@@ -4,7 +4,7 @@ import { theme } from '../config/designSystem';
 
 type Variant = 'primary' | 'secondary' | 'outline';
 
-interface GRButtonProps {
+interface GrButtonProps {
   label: string;
   onPress?: (e: GestureResponderEvent) => void;
   variant?: Variant;
@@ -15,7 +15,7 @@ interface GRButtonProps {
   leftIcon?: string;
 }
 
-export const GRButton: React.FC<GRButtonProps> = ({
+export const grButton: React.FC<GrButtonProps> = ({
 	label,
 	onPress,
 	variant = 'primary',
@@ -74,4 +74,4 @@ const styles = StyleSheet.create({
 	}
 });
 
-export default GRButton;
+export default grButton;

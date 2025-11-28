@@ -118,6 +118,45 @@ describe('TrainingController.saveTraining', () => {
     expect(t.distance).to.equal(5000);
     expect(t).to.have.property('avgSpeed');
     expect(t.avgSpeed).to.equal(12.0);
+    expect(t).to.have.property('isGhost');
+    expect(t.isGhost).to.equal(0);
+  });
+
+  it('should save a training as ghost when isGhost is set', async () => {
+    const req: any = {
+      body: {
+        userEmail: 'test@local',
+        distance: 5000,
+        duration: '00:26:00',
+        avgSpeed: 12.0,
+        maxSpeed: 15.0,
+        rithm: 5.0,
+        calories: 300,
+        elevationGain: 10,
+        trainingType: 'Running',
+        isGhost: 1,
+        route: [
+          { latitude: 4.6, longitude: -74.0, altitude: 2550 },
+          { latitude: 4.6001, longitude: -74.0002, altitude: 2552 }
+        ],
+        datetime: '2025-11-16T12:00:00Z'
+      }
+    };
+
+    const res: any = {
+      statusCode: 0,
+      body: null,
+      status(code: number) { this.statusCode = code; return this; },
+      json(obj: any) { this.body = obj; return this; }
+    };
+
+    await controller.saveTraining(req, res);
+
+    expect(res.statusCode).to.equal(201);
+    expect(res.body).to.have.property('training');
+    const t = res.body.training;
+    expect(t).to.have.property('isGhost');
+    expect(t.isGhost).to.equal(1);
   });
 
   it('should return 400 if userEmail is missing', async () => {

@@ -63,7 +63,7 @@ call npm run setup-db
 :: --- 8. Volver al directorio raíz ---
 cd ..\..
 
-:: --- 9. Instalar dependencias del Frontend ---
+::: --- 9. Instalar dependencias del Frontend ---
 echo.
 echo  Instalando dependencias del Frontend...
 cd Proyecto\Frontend || (
@@ -73,9 +73,22 @@ cd Proyecto\Frontend || (
 )
 call npm install
 
+:: --- 10. Instalar expo-speech para anuncios de audio ---
+echo.
+echo  Instalando expo-speech para anuncios de audio...
+call npm install expo-speech
 
+:: --- 11. Crear ghost ficticio de 10km ---
+echo.
+echo  Creando ghost ficticio de 10km...
+cd ..\Database || (
+    echo  No se encontro la carpeta Database.
+    pause
+    exit /b
+)
+call npx ts-node seed-ghost.ts diegoGo@runner.com
 
-:: --- 10. Levantar el servidor Backend ---
+:: --- 12. Levantar el servidor Backend ---
 echo  Levantando el servidor Backend...
 :: ir al Backend usando la ruta absoluta basada en la ubicación del script
 cd /d "%~dp0Proyecto\Backend" || (
