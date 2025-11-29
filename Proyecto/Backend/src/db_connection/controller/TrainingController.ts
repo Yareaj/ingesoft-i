@@ -8,6 +8,25 @@ import { calculateTrainingStats, calculatePace } from "../../services/trainingSe
 import * as fs from 'fs';
 import * as path from 'path';
 
+// Helper: parse HH:MM:SS or numeric seconds string to seconds
+function parseDurationStr(d?: string | number): number {
+	if (d === undefined || d === null) {
+		return 0;
+	}
+	if (typeof d === 'number') {
+		return Math.floor(d);
+	}
+	if (typeof d === 'string') {
+		const parts = d.split(':').map(p => Number(p));
+		if (parts.length === 3 && parts.every(p => !isNaN(p))) {
+			return Math.floor(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+		}
+		const n = Number(d);
+		return Number.isNaN(n) ? 0 : Math.floor(n);
+	}
+	return 0;
+}
+
 const trainingRepository = appDataSource.getRepository(Training);
 const userRepository = appDataSource.getRepository(User);
 const routeRepository = appDataSource.getRepository(Route);
@@ -45,19 +64,28 @@ export const saveTraining = async (req: Request, res: Response) => {
 			return res.status(400).json({ error: "userEmail is required" });
 		}
 
-		// Validate that we have either a route with at least 2 coordinates or a positive distance
-		const hasValidRoute = route && Array.isArray(route) && route.length >= 2;
-		const parsedDistance = Number(distance) || 0;
-		if (!hasValidRoute && parsedDistance <= 0) {
-			return res.status(400).json({ error: "Invalid training data: provide a route with at least 2 coordinates or a positive distance" });
+		// Validate more robust minimums before saving:
+		// - route must have more than 5 points (need >5)
+		// - duration must be > 10 seconds
+		// - distance must be more than 10 meters
+		const hasValidRoute = route && Array.isArray(route) && route.length > 5;
+		const parsedDistanceKm = Number(distance) || 0;
+		const parsedDistanceMeters = parsedDistanceKm * 1000;
+		const durationSeconds = parseDurationStr(duration);
+		if (!hasValidRoute) {
+			return res.status(400).json({ error: 'Not enough recorded coordinates: need more than 5 points' });
+		}
+		if (durationSeconds <= 10) {
+			return res.status(400).json({ error: 'Training too short: duration must be greater than 10 seconds' });
+		}
+		if (parsedDistanceMeters <= 10) {
+			return res.status(400).json({ error: 'Distance too short: must be more than 10 meters' });
 		}
 
-		// Buscar usuario: usar exactamente el email que envía el cliente
-		const rawEmail = userEmail;
-		const user = await userRepository.findOne({ where: { email: rawEmail }});
+		const user = await userRepository.findOne({ where: { email: userEmail }});
 
 		if (!user) {
-			console.warn(`saveTraining: user not found for email='${rawEmail}'`);
+			console.warn(`saveTraining: user not found for email='${userEmail}'`);
 			return res.status(404).json({ error: "User not found" });
 		}
 
@@ -125,12 +153,21 @@ export const saveTraining = async (req: Request, res: Response) => {
 			publicImageUrl = null;
 		}
 
+		// Handle name uniqueness: if a name was provided, ensure it is unique per user
+		const providedName = name && typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
+		if (providedName) {
+			const existing = await trainingRepository.findOne({ where: { userEmail: userEmail, name: providedName }});
+			if (existing) {
+				return res.status(409).json({ error: 'A training with that name already exists' });
+			}
+		}
+
 		// Crear entrenamiento
 		const training = trainingRepository.create({
 			userEmail: userEmail,
 			routeId: newRoute.id,
 			datetime: datetime ? new Date(datetime) : new Date(),
-			name: name || null,
+			name: providedName ?? undefined,
 			duration: duration || "00:00:00",
 			rithm: rithm || 0,
 			maxSpeed: maxSpeed || avgSpeed || 0,
@@ -145,6 +182,12 @@ export const saveTraining = async (req: Request, res: Response) => {
 		});
 
 		await trainingRepository.save(training);
+
+		// If no name was provided, set a default name based on the training counter and persist it
+		if (!training.name) {
+			training.name = `Training #${training.counter}`;
+			await trainingRepository.save(training);
+		}
 
 		return res.status(201).json({
 			message: "Training saved successfully",
@@ -216,7 +259,7 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 
 export const replaceGhost = async (req: Request, res: Response) => {
 	try {
-		const { oldGhostCounter, userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime } = req.body;
+		const { oldGhostCounter, userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime, name } = req.body;
 
 		if (!oldGhostCounter || !userEmail) {
 			return res.status(400).json({ error: "oldGhostCounter and userEmail are required" });
@@ -239,6 +282,30 @@ export const replaceGhost = async (req: Request, res: Response) => {
 		const user = await userRepository.findOne({ where: { email: userEmail }});
 		if (!user) {
 			return res.status(404).json({ error: "User not found" });
+		}
+
+		// Validate minimums for ghost replacement as well
+		const hasValidRoute = route && Array.isArray(route) && route.length > 5;
+		const parsedDistanceKm = Number(distance) || 0;
+		const parsedDistanceMeters = parsedDistanceKm * 1000;
+		const durationSeconds = parseDurationStr(duration);
+		if (!hasValidRoute) {
+			return res.status(400).json({ error: 'Not enough recorded coordinates: need more than 5 points' });
+		}
+		if (durationSeconds <= 10) {
+			return res.status(400).json({ error: 'Training too short: duration must be greater than 10 seconds' });
+		}
+		if (parsedDistanceMeters <= 10) {
+			return res.status(400).json({ error: 'Distance too short: must be more than 10 meters' });
+		}
+
+		// If a name was provided for the new ghost, ensure uniqueness per user
+		const providedName = name && typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
+		if (providedName) {
+			const existing = await trainingRepository.findOne({ where: { userEmail: userEmail, name: providedName }});
+			if (existing) {
+				return res.status(409).json({ error: 'A training with that name already exists' });
+			}
 		}
 
 		// Create coordinates
@@ -275,11 +342,18 @@ export const replaceGhost = async (req: Request, res: Response) => {
 			elevationGain: elevationGain || 0,
 			trainingType: trainingType || 'Running',
 			isGhost: 1,
+			name: providedName ?? undefined,
 			user: user,
 			route: newRoute
 		});
 
 		await trainingRepository.save(newGhost);
+
+		// If no name was provided, set a default name based on the counter
+		if (!newGhost.name) {
+			newGhost.name = `Training #${newGhost.counter}`;
+			await trainingRepository.save(newGhost);
+		}
 
 		return res.status(201).json({
 			message: "Ghost replaced successfully",
@@ -300,5 +374,54 @@ export const replaceGhost = async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error("Error replacing ghost:", error);
 		return res.status(500).json({ error: "Error replacing ghost" });
+	}
+};
+
+export const deleteTraining = async (req: Request, res: Response) => {
+	try {
+		const { counter } = req.params;
+		if (!counter) {
+			return res.status(400).json({ error: 'Training counter is required' });
+		}
+
+		const training = await trainingRepository.findOne({ where: { counter: Number(counter) }, relations: ['route'] });
+		if (!training) {
+			return res.status(404).json({ error: 'Training not found' });
+		}
+
+		// Delete image file if it's a public image path
+		try {
+			const img = training.image;
+			if (img && typeof img === 'string' && img.startsWith('/images/')) {
+				const fileName = img.replace('/images/', '');
+				const imagesDir = path.join(__dirname, '../../../../Database/db_images');
+				const filePath = path.join(imagesDir, fileName);
+				if (fs.existsSync(filePath)) {
+					await fs.promises.unlink(filePath);
+				}
+			}
+		} catch (err) {
+			console.warn('Failed to remove training image file:', err);
+		}
+
+		// Remove the training record
+		await trainingRepository.remove(training);
+
+		// Optionally remove the route if no other trainings reference it
+		try {
+			if (training.route && training.route.id) {
+				const other = await trainingRepository.count({ where: { routeId: training.route.id }});
+				if (other === 0) {
+					await routeRepository.delete(training.route.id);
+				}
+			}
+		} catch (err) {
+			console.warn('Failed to clean up route after training deletion:', err);
+		}
+
+		return res.status(200).json({ message: 'Training deleted' });
+	} catch (error) {
+		console.error('Error deleting training:', error);
+		return res.status(500).json({ error: 'Error deleting training' });
 	}
 };

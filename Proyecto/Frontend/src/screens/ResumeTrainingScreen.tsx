@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, TextInput, Image } from 'react-native';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -50,29 +50,138 @@ export default function ResumeTrainingScreen() {
  		isGhost: params.isGhost || false
 	};
 
-	const handleSave = async () => {
-		try {
-			// Ensure map is fitted to the route before taking a snapshot so the image contains the route
-			let snapshotBase64: string | undefined = undefined;
+	function parseDurationToSeconds(d?: string | number) {
+		if (d === undefined || d === null) {
+			return 0;
+		}
+		if (typeof d === 'number') {
+			return Math.floor(d);
+		}
+		if (typeof d === 'string') {
+			const parts = d.split(':').map(p => Number(p));
+			if (parts.length === 3 && parts.every(p => !isNaN(p))) {
+				return Math.floor(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+			}
+			const n = Number(d);
+			return Number.isNaN(n) ? 0 : Math.floor(n);
+		}
+		return 0;
+	}
+
+	const [validationError, setValidationError] = useState<string | null>(null);
+	const [canSave, setCanSave] = useState(true);
+
+	useEffect(() => {
+		// Validate locally the same rules enforced by the server
+		const coordsCount = (trainingData.route || []).length;
+		const durationSec = parseDurationToSeconds(trainingData.duration);
+		const distanceKm = Number(trainingData.distance) || 0;
+		const distanceMeters = distanceKm * 1000;
+
+		if (durationSec <= 10) {
+			setValidationError('Cannot save: duration must be greater than 10 seconds.');
+			setCanSave(false);
+			return;
+		}
+		if (distanceMeters <= 10) {
+			setValidationError('Cannot save: distance must be greater than 10 meters.');
+			setCanSave(false);
+			return;
+		}
+		if (coordsCount <= 5) {
+			setValidationError('Cannot save: more than 5 route points are required.');
+			setCanSave(false);
+			return;
+		}
+		setValidationError(null);
+		setCanSave(true);
+	}, [trainingData.route, trainingData.duration, trainingData.distance]);
+
+	// Compute a map region that contains all coords with a small padding percentage
+	const computePaddedRegion = (coords: Array<{ latitude: number; longitude: number }>, paddingPct = 0.06) => {
+		if (!coords || coords.length === 0) {return null;}
+		let minLat = coords[0].latitude;
+		let maxLat = coords[0].latitude;
+		let minLng = coords[0].longitude;
+		let maxLng = coords[0].longitude;
+		for (let i = 1; i < coords.length; i++) {
+			const c = coords[i];
+			if (c.latitude < minLat) {minLat = c.latitude;}
+			if (c.latitude > maxLat) {maxLat = c.latitude;}
+			if (c.longitude < minLng) {minLng = c.longitude;}
+			if (c.longitude > maxLng) {maxLng = c.longitude;}
+		}
+		const latSpan = Math.max(0.0005, maxLat - minLat);
+		const lngSpan = Math.max(0.0005, maxLng - minLng);
+		const centerLat = (minLat + maxLat) / 2;
+		const centerLng = (minLng + maxLng) / 2;
+		return {
+			latitude: centerLat,
+			longitude: centerLng,
+			latitudeDelta: latSpan * (1 + paddingPct),
+			longitudeDelta: lngSpan * (1 + paddingPct)
+		};
+	};
+
+	// When the screen mounts (i.e. the user just finished a training),
+	// take a snapshot of the map and show it immediately as a preview.
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
 			try {
-				if (mapRef.current && typeof (mapRef.current as any).fitToCoordinates === 'function' && trainingData.route.length > 0) {
-					try {
-						// Ensure we pass plain lat/lng objects and give the map enough time to render
-						const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+				if (mapRef.current && trainingData.route.length > 0) {
+					const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+					const region = computePaddedRegion(coords, 0.06);
+					if (region && typeof (mapRef.current as any).animateToRegion === 'function') {
+						(mapRef.current as any).animateToRegion(region, 500);
+					} else if (typeof (mapRef.current as any).fitToCoordinates === 'function') {
 						(mapRef.current as any).fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
-						// give the map a bit more time to render the new region
-						await new Promise(r => setTimeout(r, 900));
-					} catch (e) {
-						console.warn('fitToCoordinates failed before snapshot:', e);
 					}
+					await new Promise(r => setTimeout(r, 900));
 				}
-				// Attempt to capture a snapshot of the map (base64 PNG)
 				if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
 					const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
-					if (snap) {
-						snapshotBase64 = `data:image/png;base64,${snap}`;
-						// show preview immediately
-						setSavedImageUrl(snapshotBase64);
+					if (snap && mounted) {
+						setSavedImageUrl(`data:image/png;base64,${snap}`);
+					}
+				}
+			} catch (err) {
+				console.warn('initial map snapshot failed:', err);
+			}
+		})();
+		return () => { mounted = false; };
+	}, []);
+
+	const handleSave = async () => {
+		try {
+			// Reuse an existing snapshot if we already captured one on mount.
+			let snapshotBase64: string | undefined = savedImageUrl ?? undefined;
+			try {
+				if (!snapshotBase64) {
+					if (mapRef.current && trainingData.route.length > 0) {
+						try {
+							// Ensure we pass plain lat/lng objects and give the map enough time to render
+							const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+							const region = computePaddedRegion(coords, 0.06);
+							if (region && typeof (mapRef.current as any).animateToRegion === 'function') {
+								(mapRef.current as any).animateToRegion(region, 500);
+							} else if (typeof (mapRef.current as any).fitToCoordinates === 'function') {
+								(mapRef.current as any).fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+							}
+							// give the map a bit more time to render the new region
+							await new Promise(r => setTimeout(r, 900));
+						} catch (e) {
+							console.warn('fitToCoordinates/animateToRegion failed before snapshot:', e);
+						}
+					}
+					// Attempt to capture a snapshot of the map (base64 PNG)
+					if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
+						const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
+						if (snap) {
+							snapshotBase64 = `data:image/png;base64,${snap}`;
+							// show preview immediately
+							setSavedImageUrl(snapshotBase64);
+						}
 					}
 				}
 			} catch (err) {
@@ -101,7 +210,9 @@ export default function ResumeTrainingScreen() {
 					})
 				});
 
-				if (response.ok) {
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
 					const data = await response.json();
 					if (data?.newGhost?.image) {
 						setSavedImageUrl(data.newGhost.image);
@@ -116,7 +227,7 @@ export default function ResumeTrainingScreen() {
 							}
 						]
 					);
-					} else {
+				} else {
 					let body = 'Failed to save new ghost record';
 					try { body = await response.text(); } catch (err) { void err; }
 					Alert.alert('Error', body);
@@ -145,7 +256,9 @@ export default function ResumeTrainingScreen() {
 					})
 				});
 
-				if (response.ok) {
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
 					const data = await response.json();
 					if (data?.training?.image) {
 						setSavedImageUrl(data.training.image);
@@ -181,7 +294,9 @@ export default function ResumeTrainingScreen() {
 					})
 				});
 
-				if (response.ok) {
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
 					const data = await response.json();
 					if (data?.training?.image) {
 						setSavedImageUrl(data.training.image);
@@ -331,6 +446,13 @@ export default function ResumeTrainingScreen() {
 							<Image source={{ uri: savedImageUrl }} style={{ width: 200, height: 120, borderRadius: 8 }} />
 						</View>
 					)}
+
+					{/* Validation message shown when training cannot be saved */}
+					{validationError && (
+						<View style={{ marginTop: 12, padding: theme.spacing.s, backgroundColor: '#FFF4E5', borderRadius: 8 }}>
+							<Text style={{ color: '#8A4B00' }}>{validationError}</Text>
+						</View>
+					)}
 				</View>
 
 				<View style={styles.actions}>
@@ -338,6 +460,7 @@ export default function ResumeTrainingScreen() {
 						label="💾 Save Training"
 						variant="primary"
 						onPress={handleSave}
+						disabled={!canSave}
 						style={styles.actionButton}
 					/>
 

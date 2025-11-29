@@ -255,7 +255,7 @@ export default function TrainingScreen({ userEmail }: TrainingScreenProps) {
 				const sub = await Location.watchPositionAsync(
 					{
 						accuracy: Location.Accuracy.BestForNavigation,
-						timeInterval: 1000,
+						timeInterval: 3000,
 						distanceInterval: 10
 					},
 					(location) => {
