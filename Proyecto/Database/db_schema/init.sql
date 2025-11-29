@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS "Training" (
   "routeId" INT NOT NULL,
   "datetime" TIMESTAMP NOT NULL,
   "duration" TIME NOT NULL,
+  "name" VARCHAR(100),
   "rithm" DECIMAL(4,2) NOT NULL,
   "maxSpeed" DECIMAL(5,2) NOT NULL,
   "avgSpeed" DECIMAL(5,2) NOT NULL,

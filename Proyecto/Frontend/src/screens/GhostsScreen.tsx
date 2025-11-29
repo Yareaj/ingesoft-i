@@ -44,12 +44,9 @@ export default function GhostsScreen() {
 			const resp = await fetch(apiUrl(`/api/trainings/${encodeURIComponent(user.email)}`));
 			if (!resp.ok) {throw new Error('Failed fetching trainings');}
 			const json = await resp.json();
-			console.log('API Response:', json);
 			const trainings: TrainingItem[] = json?.trainings || [];
-			console.log('All trainings:', trainings);
 			// filter only ghosts (isGhost === 1)
 			const ghosts = trainings.filter(t => Number(t.isGhost) === 1);
-			console.log('Filtered ghosts:', ghosts);
 			setMyGhosts(ghosts);
 		} catch (err) {
 			console.error('Failed loading ghosts', err);

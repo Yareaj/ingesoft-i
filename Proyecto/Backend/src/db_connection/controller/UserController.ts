@@ -40,7 +40,6 @@ export const upload = multer({
 export const registerUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 	try {
-		console.log("➡️  /api/register hit. Body:", req.body);
 
 		const { username, email, name, lastname, age, password, gender, description } = req.body ?? {};
 		const requiredFields = { username, email, name, lastname, age, password, gender };
@@ -87,7 +86,6 @@ export const loginUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 
 	try {
-		console.log("➡️  /api/login hit. Body:", req.body);
 		const { email, password } = req.body ?? {};
 		if (!email) {
 			console.warn("⚠️  Missing required email field in query");

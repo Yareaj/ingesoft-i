@@ -13,7 +13,6 @@ export default function GhostDetailScreen() {
 	const params = (route.params as { training?: any }) || {};
 	const t = params.training;
 
-	console.log('GhostDetailScreen - Training data:', t);
 
 	if (!t) {
 		return (
@@ -41,13 +40,13 @@ export default function GhostDetailScreen() {
 						style={styles.map}
 						provider={PROVIDER_GOOGLE}
 						initialRegion={{
-							latitude: t.route?.[0]?.latitude || 37.78825,
-							longitude: t.route?.[0]?.longitude || -122.4324,
+							latitude: Number(t.route?.[0]?.latitude) || 37.78825,
+							longitude: Number(t.route?.[0]?.longitude) || -122.4324,
 							latitudeDelta: 0.05,
 							longitudeDelta: 0.05
 						}}
 					>
-						{t.route?.length > 1 && <Polyline coordinates={t.route} strokeColor={theme.colors.primary} strokeWidth={3} />}
+						{t.route?.length > 1 && <Polyline coordinates={t.route.map((p: any) => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }))} strokeColor={theme.colors.primary} strokeWidth={3} />}
 					</MapView>
 				</View>
 

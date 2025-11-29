@@ -36,11 +36,12 @@ export const calculateTraining = async (req: Request, res: Response) => {
 
 export const saveTraining = async (req: Request, res: Response) => {
 	try {
-		const { userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime } = req.body;
+		const { userEmail, distance, duration, avgSpeed, maxSpeed, rithm, calories, elevationGain, trainingType, route, datetime, name } = req.body;
 		// isGhost may be provided by the client (1) or defaults to 0
 		const isGhost = req.body && req.body.isGhost ? Number(req.body.isGhost) : 0;
 
 		if (!userEmail) {
+			console.warn('saveTraining: missing userEmail in request body');
 			return res.status(400).json({ error: "userEmail is required" });
 		}
 
@@ -51,9 +52,12 @@ export const saveTraining = async (req: Request, res: Response) => {
 			return res.status(400).json({ error: "Invalid training data: provide a route with at least 2 coordinates or a positive distance" });
 		}
 
-		// Buscar usuario
-		const user = await userRepository.findOne({ where: { email: userEmail }});
+		// Buscar usuario: usar exactamente el email que envía el cliente
+		const rawEmail = userEmail;
+		const user = await userRepository.findOne({ where: { email: rawEmail }});
+
 		if (!user) {
+			console.warn(`saveTraining: user not found for email='${rawEmail}'`);
 			return res.status(404).json({ error: "User not found" });
 		}
 
@@ -80,6 +84,8 @@ export const saveTraining = async (req: Request, res: Response) => {
 
 		// Handle training image (base64) and save to disk if provided
 		let publicImageUrl: string | null = null;
+		// Will hold raw base64 image data (without data: prefix) if provided
+		let imageData: string | null = null;
 		try {
 			const rawImage = req.body.trainingImage;
 			const imageName = req.body.imageName;
@@ -90,16 +96,21 @@ export const saveTraining = async (req: Request, res: Response) => {
 				if (matches && matches.length === 4) {
 					ext = matches[2];
 					base64Data = matches[3];
+					// store full data URL so clients can render directly
+					imageData = `data:image/${ext};base64,${base64Data}`;
 				} else if (rawImage.startsWith('data:')) {
-					const parts = rawImage.split(',');
-					base64Data = parts[1] || parts[0];
+					// rawImage already contains data: prefix
+					imageData = rawImage;
+				} else {
+					// rawImage may already be raw base64 without data URL
+					imageData = `data:image/png;base64,${base64Data}`;
 				}
 
 				let fileBase = (imageName && typeof imageName === 'string' && imageName.trim().length > 0) ? imageName.trim() : `training_${Date.now()}`;
 				// sanitize
 				fileBase = fileBase.replace(/[^a-zA-Z0-9-_]/g, '_');
 				let fileName = `${fileBase}.${ext}`;
-				const imagesDir = path.join(__dirname, '../../../Database/db_images');
+				const imagesDir = path.join(__dirname, '../../../../Database/db_images');
 				await fs.promises.mkdir(imagesDir, { recursive: true });
 				let filePath = path.join(imagesDir, fileName);
 				if (fs.existsSync(filePath)) {
@@ -119,13 +130,14 @@ export const saveTraining = async (req: Request, res: Response) => {
 			userEmail: userEmail,
 			routeId: newRoute.id,
 			datetime: datetime ? new Date(datetime) : new Date(),
+			name: name || null,
 			duration: duration || "00:00:00",
 			rithm: rithm || 0,
 			maxSpeed: maxSpeed || avgSpeed || 0,
 			avgSpeed: avgSpeed || 0,
 			calories: calories || 0,
 			elevationGain: elevationGain || 0,
-			image: publicImageUrl ?? undefined,
+			image: imageData ?? publicImageUrl ?? undefined,
 			trainingType: trainingType || 'Running',
 			isGhost: isGhost ? 1 : 0,
 			user: user,
@@ -139,6 +151,7 @@ export const saveTraining = async (req: Request, res: Response) => {
 			training: {
 				counter: training.counter,
 				distance: newRoute.distance,
+				name: training.name || null,
 				duration: training.duration,
 				avgSpeed: training.avgSpeed,
 				maxSpeed: training.maxSpeed,
@@ -177,6 +190,7 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 			trainings: trainings.map(t => ({
 				counter: t.counter,
 				distance: parseFloat(t.route.distance.toString()),
+				name: t.name || null,
 				duration: t.duration,
 				avgSpeed: parseFloat(t.avgSpeed.toString()),
 				maxSpeed: parseFloat(t.maxSpeed.toString()),

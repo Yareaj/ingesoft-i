@@ -64,11 +64,13 @@ Table Training {
   routeId int
   datetime timestamp
   duration time
+  name varchar
   rithm decimal
   maxSpeed decimal
   avgSpeed decimal
   calories decimal
   elevationGain decimal
+  image text
   trainingType varchar
   isGhost smallint
   avgStride decimal

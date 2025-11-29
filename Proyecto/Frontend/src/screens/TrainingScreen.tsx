@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { useRoute } from '@react-navigation/native';
 import { haversineMeters } from '../utils/locationUtils';
 import { View, Text, StyleSheet, Alert, Modal } from 'react-native';
@@ -25,7 +26,7 @@ interface TrainingScreenProps {
 	userEmail?: string;
 }
 
-export default function TrainingScreen({ userEmail = 'test@example.com' }: TrainingScreenProps) {
+export default function TrainingScreen({ userEmail }: TrainingScreenProps) {
 	const navigation = useNavigation();
 	const navRoute = useRoute();
 	const mapRef = useRef<MapView | null>(null);
@@ -50,13 +51,70 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 	const subscriptionRef = useRef<Location.LocationSubscription | null>(null);
 	const autoStoppedRef = useRef<boolean>(false);
 
+	// On mount, try to get current location so initialRegion centers on user
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				const { status } = await Location.requestForegroundPermissionsAsync();
+				if (status !== 'granted') { return; }
+				const loc = await Location.getCurrentPositionAsync({});
+				if (mounted && loc) {
+					setCurrentLocation(loc);
+					// if map exists, animate to current location
+					if (mapRef.current && (mapRef.current as any).animateToRegion) {
+						try {
+							(mapRef.current as any).animateToRegion({
+								latitude: Number(loc.coords.latitude),
+								longitude: Number(loc.coords.longitude),
+								latitudeDelta: 0.01,
+								longitudeDelta: 0.01
+							}, 400);
+						} catch (err) { void err; }
+					}
+				}
+			} catch (err) {
+				// ignore permission/position failures here; Start button will re-request
+				void err;
+			}
+		})();
+		return () => { mounted = false; };
+	}, []);
+
 	type NavParams = {
 		isGhost?: boolean;
 		ghostDistanceKm?: number;
 		runAgainstGhost?: boolean;
 		ghostTraining?: any;
+		initialLocation?: { latitude: number; longitude: number };
 	} | undefined;
 	const navParams = (navRoute.params as NavParams) || {};
+
+	const { user } = useAuth();
+
+	// If navigation provided an initialLocation (from Home), set currentLocation immediately
+	useEffect(() => {
+		const init = (navRoute.params as any)?.initialLocation;
+		if (init && init.latitude && init.longitude) {
+			const locObj = {
+				coords: {
+					latitude: Number(init.latitude),
+					longitude: Number(init.longitude),
+					altitude: 0,
+					accuracy: 0,
+					heading: 0,
+					speed: 0
+				},
+				timestamp: Date.now()
+			} as any;
+			setCurrentLocation(locObj);
+			if (mapRef.current && (mapRef.current as any).animateToRegion) {
+				try {
+					(mapRef.current as any).animateToRegion({ latitude: Number(init.latitude), longitude: Number(init.longitude), latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+				} catch (err) { void err; }
+			}
+		}
+	}, [navRoute.params]);
 
 	// Ghost training data
 	const ghostTraining = navParams?.runAgainstGhost ? navParams.ghostTraining : null;
@@ -392,7 +450,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 						{ name: 'ResumeTraining' as never, params: {
 							...stats,
 							route: route.filter(p => !p.isPause),
-							userEmail,
+							userEmail: userEmail || user?.email,
 							isGhost: navParams?.isGhost,
 							...ghostInfo
 						} as never }
@@ -414,8 +472,8 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 				style={styles.map}
 				provider={PROVIDER_GOOGLE}
 				initialRegion={{
-					latitude: currentLocation?.coords.latitude || (ghostRoute[0]?.latitude) || 37.78825,
-					longitude: currentLocation?.coords.longitude || (ghostRoute[0]?.longitude) || -122.4324,
+					latitude: Number(currentLocation?.coords.latitude) || Number(ghostRoute[0]?.latitude) || 37.78825,
+					longitude: Number(currentLocation?.coords.longitude) || Number(ghostRoute[0]?.longitude) || -122.4324,
 					latitudeDelta: 0.01,
 					longitudeDelta: 0.01
 				}}
@@ -425,7 +483,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 				{/* Ghost route - white color */}
 				{ghostTraining && ghostRoute.length > 1 && (
 					<Polyline
-						coordinates={ghostRoute}
+						coordinates={ghostRoute.map((p: any) => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }))}
 						strokeColor="#FFFFFF"
 						strokeWidth={4}
 						lineDashPattern={[10, 5]}
@@ -435,7 +493,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 				{/* Current user route - orange color */}
 				{route.length > 1 && (
 					<Polyline
-						coordinates={route.filter(p => !p.isPause)}
+						coordinates={route.filter(p => !p.isPause).map((p: any) => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }))}
 						strokeColor="#FF6B35"
 						strokeWidth={4}
 					/>
@@ -444,7 +502,7 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 				{/* Ghost marker - white pin */}
 				{ghostTraining && ghostPosition && (
 					<Marker
-						coordinate={ghostPosition}
+						coordinate={{ latitude: Number(ghostPosition.latitude), longitude: Number(ghostPosition.longitude) }}
 						anchor={{ x: 0.5, y: 0.5 }}
 					>
 						<GhostMarker />
@@ -455,8 +513,8 @@ export default function TrainingScreen({ userEmail = 'test@example.com' }: Train
 				{currentLocation && (
 					<Marker
 						coordinate={{
-							latitude: currentLocation.coords.latitude,
-							longitude: currentLocation.coords.longitude
+							latitude: Number(currentLocation.coords.latitude),
+							longitude: Number(currentLocation.coords.longitude)
 						}}
 						title="You"
 						pinColor="orange"

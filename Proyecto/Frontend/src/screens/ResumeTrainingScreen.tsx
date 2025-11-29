@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Alert, TextInput, Image } from 'rea
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
@@ -18,7 +19,7 @@ interface RouteParams {
 	elevationGain: number;
 	pace: string;
 	route: Array<{ latitude: number; longitude: number; timestamp: number; altitude?: number }>;
-	userEmail: string;
+	userEmail?: string;
 	isGhost?: boolean;
 	ghostCounter?: number;
 	ghostDistance?: number;
@@ -29,9 +30,9 @@ export default function ResumeTrainingScreen() {
 	const route = useRoute();
 	const navigation = useNavigation();
 	const params = (route.params as RouteParams) || {};
+	const { user } = useAuth();
 	type MapWithSnapshot = MapView & { takeSnapshot?: (opts: { width: number; height: number; format: string; result: string }) => Promise<string> };
 	const mapRef = useRef<MapWithSnapshot | null>(null);
-	const [imageName, setImageName] = useState('');
 	const [trainingName, setTrainingName] = useState('');
 	const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null);
 
@@ -45,19 +46,33 @@ export default function ResumeTrainingScreen() {
 		elevationGain: params.elevationGain || 0,
 		pace: params.pace || '0:00',
 		route: params.route || [],
- 		userEmail: params.userEmail || 'test@example.com',
+		userEmail: params.userEmail || user?.email,
  		isGhost: params.isGhost || false
 	};
 
 	const handleSave = async () => {
 		try {
-			// Attempt to capture a snapshot of the map (base64 PNG)
+			// Ensure map is fitted to the route before taking a snapshot so the image contains the route
 			let snapshotBase64: string | undefined = undefined;
 			try {
+				if (mapRef.current && typeof (mapRef.current as any).fitToCoordinates === 'function' && trainingData.route.length > 0) {
+					try {
+						// Ensure we pass plain lat/lng objects and give the map enough time to render
+						const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+						(mapRef.current as any).fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+						// give the map a bit more time to render the new region
+						await new Promise(r => setTimeout(r, 900));
+					} catch (e) {
+						console.warn('fitToCoordinates failed before snapshot:', e);
+					}
+				}
+				// Attempt to capture a snapshot of the map (base64 PNG)
 				if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
 					const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
 					if (snap) {
 						snapshotBase64 = `data:image/png;base64,${snap}`;
+						// show preview immediately
+						setSavedImageUrl(snapshotBase64);
 					}
 				}
 			} catch (err) {
@@ -81,7 +96,7 @@ export default function ResumeTrainingScreen() {
 						trainingType: 'Running',
 						route: trainingData.route,
 						trainingImage: snapshotBase64,
-						imageName: imageName || undefined,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString()
 					})
 				});
@@ -101,8 +116,10 @@ export default function ResumeTrainingScreen() {
 							}
 						]
 					);
-				} else {
-					Alert.alert('Error', 'Failed to save new ghost record');
+					} else {
+					let body = 'Failed to save new ghost record';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
 			} else if (params.ghostCounter && !params.beatGhost) {
 				// If user didn't beat ghost but was racing, save as normal training
@@ -121,7 +138,7 @@ export default function ResumeTrainingScreen() {
 						trainingType: 'Running',
 						route: trainingData.route,
 						trainingImage: snapshotBase64,
-						imageName: imageName || undefined,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString(),
 						// Save as regular training
 						isGhost: 0
@@ -137,7 +154,9 @@ export default function ResumeTrainingScreen() {
 						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
 					]);
 				} else {
-					Alert.alert('Error', 'Failed to save training');
+					let body = 'Failed to save training';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
 			} else {
 				// Regular training save (not racing against ghost)
@@ -156,7 +175,7 @@ export default function ResumeTrainingScreen() {
 						trainingType: 'Running',
 						route: trainingData.route,
 						trainingImage: snapshotBase64,
-						imageName: imageName || undefined,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString(),
 						isGhost: trainingData.isGhost ? 1 : 0
 					})
@@ -171,7 +190,9 @@ export default function ResumeTrainingScreen() {
 						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
 					]);
 				} else {
-					Alert.alert('Error', 'Failed to save training');
+					let body = 'Failed to save training';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
 			}
 		} catch (error) {
@@ -303,16 +324,7 @@ export default function ResumeTrainingScreen() {
 						{trainingName.trim() ? `Will be saved as: "${trainingName.trim()}"` : 'If you don\'t enter a name, it will be assigned automatically'}
 					</Text>
 
-					<Text style={[styles.nameInputLabel, { marginTop: 12 }]}>Image filename (without extension)</Text>
-					<TextInput
-						style={styles.nameInput}
-						placeholder="e.g. morning_run_2025-11-28"
-						placeholderTextColor={theme.colors.textSecondary}
-						value={imageName}
-						onChangeText={setImageName}
-						maxLength={80}
-					/>
-					<Text style={styles.nameInputHint}>The provided name will be used as the image filename (PNG).</Text>
+
 					{savedImageUrl && (
 						<View style={{ marginTop: 12, alignItems: 'center' }}>
 							<Text style={{ marginBottom: 8 }}>Saved Image Preview:</Text>

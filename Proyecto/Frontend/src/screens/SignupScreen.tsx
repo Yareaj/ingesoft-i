@@ -52,7 +52,7 @@ const signupScreen = ({ onBack }: SignupScreenProps) => {
 			return;
 		}
 
-		console.log("Connecting to IP:", apiUrl('/api/register'));
+		// debug log removed
 
 		try {
 			const formData = new FormData();
