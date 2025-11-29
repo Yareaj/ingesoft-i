@@ -95,7 +95,11 @@ describe('TrainingController.saveTraining', () => {
 				trainingType: 'Running',
 				route: [
 					{ latitude: 4.6, longitude: -74.0, altitude: 2550 },
-					{ latitude: 4.6001, longitude: -74.0002, altitude: 2552 }
+					{ latitude: 4.6001, longitude: -74.0002, altitude: 2552 },
+					{ latitude: 4.6002, longitude: -74.0003, altitude: 2553 },
+					{ latitude: 4.6003, longitude: -74.0004, altitude: 2551 },
+					{ latitude: 4.6004, longitude: -74.0005, altitude: 2554 },
+					{ latitude: 4.6005, longitude: -74.0006, altitude: 2550 }
 				],
 				datetime: '2025-11-16T12:00:00Z'
 			}
@@ -137,7 +141,11 @@ describe('TrainingController.saveTraining', () => {
 				isGhost: 1,
 				route: [
 					{ latitude: 4.6, longitude: -74.0, altitude: 2550 },
-					{ latitude: 4.6001, longitude: -74.0002, altitude: 2552 }
+					{ latitude: 4.6001, longitude: -74.0002, altitude: 2552 },
+					{ latitude: 4.6002, longitude: -74.0003, altitude: 2553 },
+					{ latitude: 4.6003, longitude: -74.0004, altitude: 2551 },
+					{ latitude: 4.6004, longitude: -74.0005, altitude: 2554 },
+					{ latitude: 4.6005, longitude: -74.0006, altitude: 2550 }
 				],
 				datetime: '2025-11-16T12:00:00Z'
 			}
@@ -167,7 +175,7 @@ describe('TrainingController.saveTraining', () => {
 	});
 
 	it('should return 404 when user not found', async () => {
-		const req: any = { body: { userEmail: 'notfound@local', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 } ] }};
+		const req: any = { body: { userEmail: 'notfound@local', distance: 1, duration: '00:01:00', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 }, { latitude: 4.6002, longitude: -74.0003, altitude: 2553 }, { latitude: 4.6003, longitude: -74.0004, altitude: 2551 }, { latitude: 4.6004, longitude: -74.0005, altitude: 2554 }, { latitude: 4.6005, longitude: -74.0006, altitude: 2550 } ] }};
 		const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
 		await controller.saveTraining(req, res);
 		expect(res.statusCode).to.equal(404);
@@ -184,7 +192,7 @@ describe('TrainingController.saveTraining', () => {
 	it('should return 500 when training repository save fails', async () => {
 		// enable throwing in fake repo
 		shouldThrowOnSave = true;
-		const req: any = { body: { userEmail: 'test@local', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 } ] }};
+		const req: any = { body: { userEmail: 'test@local', distance: 1, duration: '00:02:00', route: [ { latitude: 4.6, longitude: -74.0, altitude: 2550 }, { latitude: 4.6001, longitude: -74.0002, altitude: 2552 }, { latitude: 4.6002, longitude: -74.0003, altitude: 2553 }, { latitude: 4.6003, longitude: -74.0004, altitude: 2551 }, { latitude: 4.6004, longitude: -74.0005, altitude: 2554 }, { latitude: 4.6005, longitude: -74.0006, altitude: 2550 } ] }};
 		const res: any = { statusCode: 0, body: null, status(code: number) { this.statusCode = code; return this; }, json(obj: any) { this.body = obj; return this; } };
 		await controller.saveTraining(req, res);
 		expect(res.statusCode).to.equal(500);
