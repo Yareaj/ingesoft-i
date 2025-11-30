@@ -18,6 +18,9 @@ export class Training {
     @Column({ name: "datetime" })
     	datetime!: Date;
 
+    @Column({ name: "name", length: 100, nullable: true })
+    	name?: string;
+
     @Column({ name: "duration", type: "time" })
     	duration!: string;
 
@@ -35,6 +38,9 @@ export class Training {
 
     @Column({ name: "elevationGain", type: "decimal", precision: 5, scale: 2 })
     	elevationGain!: number;
+
+    @Column({ name: "image", type: "text", nullable: true })
+    	image?: string;
 
     @Column({ name: "trainingType", length: 10 })
     	trainingType!: 'Running' | 'Cycling';

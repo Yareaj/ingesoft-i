@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert, TextInput, Image } from 'react-native';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import GRButton from '../components/GRButton';
@@ -18,7 +19,7 @@ interface RouteParams {
 	elevationGain: number;
 	pace: string;
 	route: Array<{ latitude: number; longitude: number; timestamp: number; altitude?: number }>;
-	userEmail: string;
+	userEmail?: string;
 	isGhost?: boolean;
 	ghostCounter?: number;
 	ghostDistance?: number;
@@ -28,7 +29,12 @@ interface RouteParams {
 export default function ResumeTrainingScreen() {
 	const route = useRoute();
 	const navigation = useNavigation();
-	const params = route.params as RouteParams || {};
+	const params = (route.params as RouteParams) || {};
+	const { user } = useAuth();
+	type MapWithSnapshot = MapView & { takeSnapshot?: (opts: { width: number; height: number; format: string; result: string }) => Promise<string> };
+	const mapRef = useRef<MapWithSnapshot | null>(null);
+	const [trainingName, setTrainingName] = useState('');
+	const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null);
 
 	const trainingData: RouteParams = {
 		distance: params.distance || 0,
@@ -40,12 +46,147 @@ export default function ResumeTrainingScreen() {
 		elevationGain: params.elevationGain || 0,
 		pace: params.pace || '0:00',
 		route: params.route || [],
-		userEmail: params.userEmail || 'test@example.com'
-		,isGhost: params.isGhost || false
+		userEmail: params.userEmail || user?.email,
+ 		isGhost: params.isGhost || false
 	};
+
+	function parseDurationToSeconds(d?: string | number) {
+		if (d === undefined || d === null) {
+			return 0;
+		}
+		if (typeof d === 'number') {
+			return Math.floor(d);
+		}
+		if (typeof d === 'string') {
+			const parts = d.split(':').map(p => Number(p));
+			if (parts.length === 3 && parts.every(p => !isNaN(p))) {
+				return Math.floor(parts[0] * 3600 + parts[1] * 60 + parts[2]);
+			}
+			const n = Number(d);
+			return Number.isNaN(n) ? 0 : Math.floor(n);
+		}
+		return 0;
+	}
+
+	const [validationError, setValidationError] = useState<string | null>(null);
+	const [canSave, setCanSave] = useState(true);
+
+	useEffect(() => {
+		// Validate locally the same rules enforced by the server
+		const coordsCount = (trainingData.route || []).length;
+		const durationSec = parseDurationToSeconds(trainingData.duration);
+		const distanceKm = Number(trainingData.distance) || 0;
+		const distanceMeters = distanceKm * 1000;
+
+		if (durationSec <= 10) {
+			setValidationError('Cannot save: duration must be greater than 10 seconds.');
+			setCanSave(false);
+			return;
+		}
+		if (distanceMeters <= 10) {
+			setValidationError('Cannot save: distance must be greater than 10 meters.');
+			setCanSave(false);
+			return;
+		}
+		if (coordsCount <= 5) {
+			setValidationError('Cannot save: more than 5 route points are required.');
+			setCanSave(false);
+			return;
+		}
+		setValidationError(null);
+		setCanSave(true);
+	}, [trainingData.route, trainingData.duration, trainingData.distance]);
+
+	// Compute a map region that contains all coords with a small padding percentage
+	const computePaddedRegion = (coords: Array<{ latitude: number; longitude: number }>, paddingPct = 0.06) => {
+		if (!coords || coords.length === 0) {return null;}
+		let minLat = coords[0].latitude;
+		let maxLat = coords[0].latitude;
+		let minLng = coords[0].longitude;
+		let maxLng = coords[0].longitude;
+		for (let i = 1; i < coords.length; i++) {
+			const c = coords[i];
+			if (c.latitude < minLat) {minLat = c.latitude;}
+			if (c.latitude > maxLat) {maxLat = c.latitude;}
+			if (c.longitude < minLng) {minLng = c.longitude;}
+			if (c.longitude > maxLng) {maxLng = c.longitude;}
+		}
+		const latSpan = Math.max(0.0005, maxLat - minLat);
+		const lngSpan = Math.max(0.0005, maxLng - minLng);
+		const centerLat = (minLat + maxLat) / 2;
+		const centerLng = (minLng + maxLng) / 2;
+		return {
+			latitude: centerLat,
+			longitude: centerLng,
+			latitudeDelta: latSpan * (1 + paddingPct),
+			longitudeDelta: lngSpan * (1 + paddingPct)
+		};
+	};
+
+	// When the screen mounts (i.e. the user just finished a training),
+	// take a snapshot of the map and show it immediately as a preview.
+	useEffect(() => {
+		let mounted = true;
+		(async () => {
+			try {
+				if (mapRef.current && trainingData.route.length > 0) {
+					const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+					const region = computePaddedRegion(coords, 0.06);
+					if (region && typeof (mapRef.current as any).animateToRegion === 'function') {
+						(mapRef.current as any).animateToRegion(region, 500);
+					} else if (typeof (mapRef.current as any).fitToCoordinates === 'function') {
+						(mapRef.current as any).fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+					}
+					await new Promise(r => setTimeout(r, 900));
+				}
+				if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
+					const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
+					if (snap && mounted) {
+						setSavedImageUrl(`data:image/png;base64,${snap}`);
+					}
+				}
+			} catch (err) {
+				console.warn('initial map snapshot failed:', err);
+			}
+		})();
+		return () => { mounted = false; };
+	}, []);
 
 	const handleSave = async () => {
 		try {
+			// Reuse an existing snapshot if we already captured one on mount.
+			let snapshotBase64: string | undefined = savedImageUrl ?? undefined;
+			try {
+				if (!snapshotBase64) {
+					if (mapRef.current && trainingData.route.length > 0) {
+						try {
+							// Ensure we pass plain lat/lng objects and give the map enough time to render
+							const coords = trainingData.route.map(p => ({ latitude: Number(p.latitude), longitude: Number(p.longitude) }));
+							const region = computePaddedRegion(coords, 0.06);
+							if (region && typeof (mapRef.current as any).animateToRegion === 'function') {
+								(mapRef.current as any).animateToRegion(region, 500);
+							} else if (typeof (mapRef.current as any).fitToCoordinates === 'function') {
+								(mapRef.current as any).fitToCoordinates(coords, { edgePadding: { top: 40, right: 40, bottom: 40, left: 40 }, animated: true });
+							}
+							// give the map a bit more time to render the new region
+							await new Promise(r => setTimeout(r, 900));
+						} catch (e) {
+							console.warn('fitToCoordinates/animateToRegion failed before snapshot:', e);
+						}
+					}
+					// Attempt to capture a snapshot of the map (base64 PNG)
+					if (mapRef.current && typeof mapRef.current.takeSnapshot === 'function') {
+						const snap = await mapRef.current.takeSnapshot({ width: 800, height: 600, format: 'png', result: 'base64' });
+						if (snap) {
+							snapshotBase64 = `data:image/png;base64,${snap}`;
+							// show preview immediately
+							setSavedImageUrl(snapshotBase64);
+						}
+					}
+				}
+			} catch (err) {
+				console.warn('Map snapshot failed:', err);
+			}
 			// If user beat their ghost, replace the old ghost with this new training
 			if (params.beatGhost && params.ghostCounter) {
 				const response = await fetch(apiUrl('/api/trainings/replace-ghost'), {
@@ -63,28 +204,36 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString()
 					})
 				});
 
-				if (response.ok) {
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
+					const data = await response.json();
+					if (data?.newGhost?.image) {
+						setSavedImageUrl(data.newGhost.image);
+					}
 					Alert.alert(
-						'🎉 New Record!', 
+						'🎉 New Record!',
 						`You got a new record in the distance ${(params.ghostDistance || 0).toFixed(2)} km!`,
-						[{
-							text: 'OK',
-							onPress: () => navigation.reset({
-								index: 0,
-								routes: [{ name: 'Main' as never }]
-							})
-						}]
+						[
+							{
+								text: 'OK',
+								onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] })
+							}
+						]
 					);
 				} else {
-					Alert.alert('Error', 'Failed to save new ghost record');
+					let body = 'Failed to save new ghost record';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
-			} 
-			// If user didn't beat ghost but was racing, save as normal training
-			else if (params.ghostCounter && !params.beatGhost) {
+			} else if (params.ghostCounter && !params.beatGhost) {
+				// If user didn't beat ghost but was racing, save as normal training
 				const response = await fetch(apiUrl('/api/trainings'), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -99,29 +248,31 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString(),
-						isGhost: 0 // Save as regular training
+						// Save as regular training
+						isGhost: 0
 					})
 				});
 
-				if (response.ok) {
-					Alert.alert(
-						'Keep training!', 
-						'You almost beat yourself. Keep pushing!',
-						[{
-							text: 'OK',
-							onPress: () => navigation.reset({
-								index: 0,
-								routes: [{ name: 'Main' as never }]
-							})
-						}]
-					);
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
+					const data = await response.json();
+					if (data?.training?.image) {
+						setSavedImageUrl(data.training.image);
+					}
+					Alert.alert('Keep training!', 'You almost beat yourself. Keep pushing!', [
+						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
+					]);
 				} else {
-					Alert.alert('Error', 'Failed to save training');
+					let body = 'Failed to save training';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
-			}
-			// Regular training save (not racing against ghost)
-			else {
+			} else {
+				// Regular training save (not racing against ghost)
 				const response = await fetch(apiUrl('/api/trainings'), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -136,24 +287,32 @@ export default function ResumeTrainingScreen() {
 						elevationGain: trainingData.elevationGain,
 						trainingType: 'Running',
 						route: trainingData.route,
+						trainingImage: snapshotBase64,
+						name: trainingName.trim() || undefined,
 						datetime: new Date().toISOString(),
 						isGhost: trainingData.isGhost ? 1 : 0
 					})
 				});
 
-				if (response.ok) {
-					Alert.alert('Success', 'Training saved successfully');
-					navigation.reset({
-						index: 0,
-						routes: [{ name: 'Main' as never }]
-					});
+				if (response.status === 409) {
+					Alert.alert('Name already taken', 'A training with that name already exists. Please choose a different name.');
+				} else if (response.ok) {
+					const data = await response.json();
+					if (data?.training?.image) {
+						setSavedImageUrl(data.training.image);
+					}
+					Alert.alert('Success', 'Training saved successfully', [
+						{ text: 'OK', onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] }) }
+					]);
 				} else {
-					Alert.alert('Error', 'Failed to save training');
+					let body = 'Failed to save training';
+					try { body = await response.text(); } catch (err) { void err; }
+					Alert.alert('Error', body);
 				}
 			}
 		} catch (error) {
 			console.error('Error saving training:', error);
-			Alert.alert('Error', 'No se pudo conectar con el servidor');
+			Alert.alert('Error', 'Could not connect to the server');
 		}
 	};
 
@@ -186,16 +345,17 @@ export default function ResumeTrainingScreen() {
 				{params.ghostCounter && (
 					<View style={params.beatGhost ? styles.victoryBanner : styles.encouragementBanner}>
 						<Text style={styles.bannerText}>
-							{params.beatGhost 
-								? `🏆 New Record! You beat your ghost!` 
+							{params.beatGhost
+								? `🏆 New Record! You beat your ghost!`
 								: `💪 Keep training, you almost beat yourself!`}
 						</Text>
 					</View>
 				)}
 
-				{/* ===== MAPA CON RUTA COMPLETA ===== */}
+				{/* ===== FULL ROUTE MAP ===== */}
 				<View style={styles.mapContainer}>
 					<MapView
+						ref={mapRef}
 						style={styles.map}
 						provider={PROVIDER_GOOGLE}
 						initialRegion={{
@@ -215,7 +375,7 @@ export default function ResumeTrainingScreen() {
 					</MapView>
 				</View>
 
-				{/* ===== ESTADÍSTICAS PRINCIPALES ===== */}
+				{/* ===== MAIN STATISTICS ===== */}
 				<View style={styles.statsSection}>
 					{trainingData.isGhost && (
 						<View style={{ padding: theme.spacing.l, alignItems: 'center' }}>
@@ -236,7 +396,7 @@ export default function ResumeTrainingScreen() {
 
 					<View style={styles.divider} />
 
-					{/* ===== ESTADÍSTICAS SECUNDARIAS ===== */}
+					{/* ===== SECONDARY STATISTICS ===== */}
 					<View style={styles.secondaryStatsGrid}>
 						<View style={styles.secondaryStatCard}>
 							<Text style={styles.secondaryStatLabel}>Pace</Text>
@@ -264,17 +424,48 @@ export default function ResumeTrainingScreen() {
 					</View>
 				</View>
 
-				{/* ===== BOTONES DE ACCIÓN ===== */}
+				{/* ===== ACTION BUTTONS ===== */}
+				<View style={styles.nameInputSection}>
+					<Text style={styles.nameInputLabel}>Training name (optional)</Text>
+					<TextInput
+						style={styles.nameInput}
+						placeholder="e.g. Morning run"
+						placeholderTextColor={theme.colors.textSecondary}
+						value={trainingName}
+						onChangeText={setTrainingName}
+						maxLength={100}
+					/>
+					<Text style={styles.nameInputHint}>
+						{trainingName.trim() ? `Will be saved as: "${trainingName.trim()}"` : 'If you don\'t enter a name, it will be assigned automatically'}
+					</Text>
+
+
+					{savedImageUrl && (
+						<View style={{ marginTop: 12, alignItems: 'center' }}>
+							<Text style={{ marginBottom: 8 }}>Saved Image Preview:</Text>
+							<Image source={{ uri: savedImageUrl }} style={{ width: 200, height: 120, borderRadius: 8 }} />
+						</View>
+					)}
+
+					{/* Validation message shown when training cannot be saved */}
+					{validationError && (
+						<View style={{ marginTop: 12, padding: theme.spacing.s, backgroundColor: '#FFF4E5', borderRadius: 8 }}>
+							<Text style={{ color: '#8A4B00' }}>{validationError}</Text>
+						</View>
+					)}
+				</View>
+
 				<View style={styles.actions}>
 					<GRButton
-						label="💾 Guardar Entrenamiento"
+						label="💾 Save Training"
 						variant="primary"
 						onPress={handleSave}
+						disabled={!canSave}
 						style={styles.actionButton}
 					/>
 
 					<GRButton
-						label="🗑️ Descartar"
+						label="🗑️ Discard"
 						variant="outline"
 						onPress={handleDiscard}
 						style={styles.actionButton}
@@ -385,5 +576,30 @@ const styles = StyleSheet.create({
 	},
 	actionButton: {
 		width: '100%'
+	},
+	nameInputSection: {
+		marginHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.l,
+		padding: theme.spacing.l,
+		backgroundColor: theme.colors.surface,
+		borderRadius: theme.radii.l
+	},
+	nameInputLabel: {
+		color: theme.colors.textPrimary,
+		fontSize: theme.typography.size.m,
+		marginBottom: theme.spacing.xs
+	},
+	nameInput: {
+		borderWidth: 1,
+		borderColor: theme.colors.border,
+		borderRadius: theme.radii.m,
+		padding: theme.spacing.s,
+		color: theme.colors.textPrimary,
+		backgroundColor: theme.colors.background
+	},
+	nameInputHint: {
+		color: theme.colors.textSecondary,
+		fontSize: theme.typography.size.s,
+		marginTop: theme.spacing.xs
 	}
 });

@@ -15,6 +15,8 @@ import TrainingScreen from '../screens/TrainingScreen';
 import ResumeTrainingScreen from '../screens/ResumeTrainingScreen';
 import GhostsScreen from '../screens/GhostsScreen';
 import GhostDetailScreen from '../screens/GhostDetailScreen';
+import HistoryScreen from '../screens/HistoryScreen';
+import TrainingDetailScreen from '../screens/TrainingDetailScreen';
 
 const tab = createBottomTabNavigator();
 const stack = createNativeStackNavigator();
@@ -73,6 +75,7 @@ function TabNavigator() {
 					)
 				}}
 			/>
+			{/* History tab removed from bottom bar - accessible from Home */}
 			<tab.Screen
 				name="Profile"
 				component={ProfileScreen}
@@ -109,9 +112,11 @@ export default function MainNavigator() {
 					}}
 				>
 					<stack.Screen name="Main" component={TabNavigator} />
+					<stack.Screen name="History" component={HistoryScreen} />
 					<stack.Screen name="Training" component={TrainingScreen} />
 					<stack.Screen name="ResumeTraining" component={ResumeTrainingScreen} />
 					<stack.Screen name="GhostDetail" component={GhostDetailScreen} />
+					<stack.Screen name="TrainingDetail" component={TrainingDetailScreen} />
 				</stack.Navigator>
 			</NavigationContainer>
 		</SafeAreaProvider>

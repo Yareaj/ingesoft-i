@@ -5,8 +5,6 @@ import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import path from 'path';
 
-const userRepository = Database.getInstance().getRepository(User);
-
 // Configure multer for profile photo uploads
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
@@ -42,13 +40,12 @@ export const upload = multer({
 export const registerUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 	try {
-		console.log("➡️  /api/register hit. Body:", req.body);
 
 		const { username, email, name, lastname, age, password, gender, description } = req.body ?? {};
-		const requiredFields = {username, email, name, lastname, age, password, gender}
-		
+		const requiredFields = { username, email, name, lastname, age, password, gender };
+
 		const missingFields = Object.entries(requiredFields)
-			.filter(([key, value]) => !value)
+			.filter(([, value]) => !value)
 			.map(([key]) => key);
 
 		if (missingFields.length > 0) {
@@ -56,7 +53,7 @@ export const registerUser = async (req: Request, res: Response) => {
 			return res.status(400).json({
 				message: "Missing requierd fields",
 				missing: missingFields
-			})
+			});
 		}
 
 		// Get profile photo path if uploaded
@@ -89,7 +86,6 @@ export const loginUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 
 	try {
-		console.log("➡️  /api/login hit. Body:", req.body);
 		const { email, password } = req.body ?? {};
 		if (!email) {
 			console.warn("⚠️  Missing required email field in query");
@@ -134,6 +130,7 @@ export const loginUser = async (req: Request, res: Response) => {
 
 
 export const getFirstUser = async (req: Request, res: Response) => {
+	const userRepository = Database.getInstance().getRepository(User);
 	try {
 		const users = await userRepository.find({ order: { registrationDate: "ASC" }, take: 1 });
 		let firstUser = users[0];

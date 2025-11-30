@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../config/commonStyles';
 import { theme } from '../config/designSystem';
@@ -13,6 +14,58 @@ export default function ProfileScreen() {
 
 	const userName = user?.names || 'Runner';
 	const userEmail = user?.email || 'runner@ghostrunning.com';
+
+	const [trainingsCount, setTrainingsCount] = useState<number>(0);
+	const [totalDistanceKm, setTotalDistanceKm] = useState<number>(0);
+	const [totalSeconds, setTotalSeconds] = useState<number>(0);
+
+	const parseDurationToSeconds = (dur: string | undefined | null) => {
+		if (!dur) {return 0;}
+		// Expecting HH:MM:SS or H:MM:SS
+		const parts = dur.split(':').map(p => Number(p));
+		if (parts.length === 3) {
+			return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+		}
+		if (parts.length === 2) {
+			return (parts[0] || 0) * 60 + (parts[1] || 0);
+		}
+		return 0;
+	};
+
+	const formatSecondsToHrs = (secs: number) => {
+		if (!secs) {return '0h';}
+		const hours = Math.floor(secs / 3600);
+		const mins = Math.floor((secs % 3600) / 60);
+		if (hours > 0) {return `${hours}h ${mins}m`;}
+		return `${mins}m`;
+	};
+
+	const loadProfileStats = useCallback(async () => {
+		if (!userEmail) {return;}
+		try {
+			const resp = await fetch(apiUrl(`/api/trainings/${encodeURIComponent(userEmail)}`));
+			if (!resp.ok) {return;}
+			const data = await resp.json();
+			const items = data.trainings || [];
+			setTrainingsCount(items.length);
+			let dist = 0;
+			let secs = 0;
+			for (const it of items) {
+				dist += Number(it.distance) || 0;
+				secs += parseDurationToSeconds(it.duration);
+			}
+			setTotalDistanceKm(dist);
+			setTotalSeconds(secs);
+		} catch (err) {
+			console.warn('Error loading profile stats', err);
+		}
+	}, [userEmail]);
+
+	useFocusEffect(
+		useCallback(() => {
+			loadProfileStats();
+		}, [loadProfileStats])
+	);
 	const userImage = user?.profilePhoto
 		? apiUrl(`/images/${user.profilePhoto}`)
 		: apiUrl('/images/nouserimage.png');
@@ -40,15 +93,15 @@ export default function ProfileScreen() {
 				{/* Stats Section */}
 				<View style={styles.statsSection}>
 					<View style={styles.statCard}>
-						<Text style={styles.statValue}>0</Text>
+						<Text style={styles.statValue}>{trainingsCount}</Text>
 						<Text style={styles.statLabel}>Trainings</Text>
 					</View>
 					<View style={styles.statCard}>
-						<Text style={styles.statValue}>0 km</Text>
+						<Text style={styles.statValue}>{totalDistanceKm.toFixed(2)} km</Text>
 						<Text style={styles.statLabel}>Distance</Text>
 					</View>
 					<View style={styles.statCard}>
-						<Text style={styles.statValue}>0h</Text>
+						<Text style={styles.statValue}>{formatSecondsToHrs(totalSeconds)}</Text>
 						<Text style={styles.statLabel}>Time</Text>
 					</View>
 				</View>

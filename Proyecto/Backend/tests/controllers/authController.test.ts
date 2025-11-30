@@ -18,7 +18,7 @@ describe('AuthController (basic)', () => {
 		originalGetRepository = dsMod.appDataSource.getRepository;
 		// create a shared fake repo so tests can mutate its behavior per-case
 		fakeUserRepo = {
-			findOne: async (opts: any) => null,
+			findOne: async (_opts: any) => null,
 			create: (u: any) => ({ ...u }),
 			save: async (u: any) => ({ ...u })
 		};

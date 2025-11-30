@@ -48,6 +48,8 @@ export default [
 			],
 
 			// --- Existing project rules ---
+			// Allow explicit any in frontend to reduce noisy refactors
+			"@typescript-eslint/no-explicit-any": "off",
 			"arrow-spacing": ["warn", { before: true, after: true }],
 			"brace-style": ["error", "1tbs", { allowSingleLine: true }],
 			"comma-dangle": ["warn", "never"],

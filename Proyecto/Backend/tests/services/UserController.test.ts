@@ -1,284 +1,214 @@
-import { expect, should } from "chai";
+import { expect } from "chai";
 import { describe, it } from "mocha";
 import sinon from "sinon";
 import { registerUser, loginUser } from "../../src/db_connection/controller/UserController";
 import bcrypt from "bcryptjs";
 import Database from "../../src/db_connection/db/Database";
-import { create } from "domain";
 
 describe("UserController Tests", () => {
-    describe("registerUser", () => {
+	describe("registerUser", () => {
 
-        //cuerpo del request falso
-        const baseBody = {
-            username: "juan",
-            email: "juan@mail.com",
-            name: "Juan",
-            lastname: "Cortés",
-            age: 21,
-            password: "123",
-            gender: "Male",
-            description: "Soy un test"
-        }
+		// cuerpo del request falso
+		const baseBody = {
+			username: "juan",
+			email: "juan@mail.com",
+			name: "Juan",
+			lastname: "Cortés",
+			age: 21,
+			password: "123",
+			gender: "Male",
+			description: "Soy un test"
+		};
 
-        const requiredFields = [
-            "username",
-            "email",
-            "password",
-            "name",
-            "lastname",
-            "age"
-        ];
+		const requiredFields = [
+			"username",
+			"email",
+			"password",
+			"name",
+			"lastname",
+			"age"
+		];
 
-        let req: any;
-        let res: any;
-        let jsonStub: any;
-        let statusStub: any;
-        let fakeRepo: any;
+		let req: any;
+		let res: any;
+		let jsonStub: any;
+		let statusStub: any;
+		let fakeRepo: any;
 
-        //Declarar los stubs
-        let hashStub: sinon.SinonStub
-        let findOneStub: sinon.SinonStub
-        let saveStub: sinon.SinonStub
-        let createStub: sinon.SinonStub
+		// Declarar los stubs
+		// use fakeRepo methods directly
 
-        //los prints
-        let consoleLogStub: sinon.SinonStub;
-        let consoleErrorStub: sinon.SinonStub;
-        let consoleWarnStub: sinon.SinonStub;
+		beforeEach(() => {
+			req = {};
+			jsonStub = sinon.stub();
+			statusStub = sinon.stub().returns({ json: jsonStub });
 
+			sinon.stub(console, "log");
+			sinon.stub(console, "error");
+			sinon.stub(console, "warn");
 
-        beforeEach(() => {
-            req = {};
-            jsonStub = sinon.stub();
-            statusStub = sinon.stub().returns({ json: jsonStub });
+			res = {
+				status: statusStub
+			};
 
-            consoleLogStub = sinon.stub(console, "log");
-            consoleErrorStub = sinon.stub(console, "error");
-            consoleWarnStub = sinon.stub(console, "warn");
+			fakeRepo = {
+				findOne: sinon.stub(),
+				save: sinon.stub(),
+				create: sinon.stub()
+			};
 
-            res = {
-                status: statusStub
-            };
+			sinon.stub(Database.getInstance(), "getRepository").returns(fakeRepo);
 
-            fakeRepo = {
-                findOne: sinon.stub(),
-                save: sinon.stub(),
-                create: sinon.stub()
-            }
+			// access fakeRepo methods directly when needed
 
-            sinon.stub(Database.getInstance(), "getRepository").returns(fakeRepo)
+			sinon.stub(bcrypt, "hash").resolves("hashed123");
+		});
 
-            findOneStub = fakeRepo.findOne;
-            saveStub = fakeRepo.save;
-            createStub = fakeRepo.create
+		afterEach(() => {
+			sinon.restore();
+		});
 
-            sinon.stub(bcrypt, "hash").resolves("hashed123");
-        });
+		it("should register user and return 201 with no missing fields", async () => {
 
-        afterEach(() => {
-            sinon.restore();
-        });
+			// cuerpo del request falso
+			req.body = { ...baseBody };
 
-        it("should register user and return 201 with no missing fields", async () => {
+			fakeRepo.findOne.resolves(null);
+			fakeRepo.save.resolves({ id:1 });
 
-            //cuerpo del request falso
-            req.body = { ...baseBody};
+			await registerUser(req, res);
 
-            findOneStub.resolves(null);
-            saveStub.resolves({ id:1 })
+			expect(statusStub.calledWith(201)).to.be.true;
+		});
 
-            await registerUser(req, res);
+		it("Should register user and return 201 if 'description' is missig", async () => {
 
-            expect(statusStub.calledWith(201)).to.be.true;
-        });
+			// body base
+			req.body = { ...baseBody };
+			// quitar description
+			delete req.body['description'];
 
-        it("Should register user and return 201 if 'description' is missig", async() => {
+			await registerUser(req, res);
 
-            //body base
-            req.body = { ...baseBody};
-            //quitar description
-            delete req.body['description'];
+			expect(statusStub.calledWith(201)).to.be.true;
+		});
 
-            await registerUser(req, res);
+		requiredFields.forEach((field) => {
+			it(`should return 400 if '${field}' is missing`, async () => {
+				// clonar body base
+				req.body = { ...baseBody };
 
-            expect(statusStub.calledWith(201)).to.be.true;
-        })
+				// borrar SOLO ese campo
+				delete req.body[field];
 
-        requiredFields.forEach((field) => {
-            it(`should return 400 if '${field}' is missing`, async () => {
-                // clonar body base
-                req.body = { ...baseBody };
+				await registerUser(req, res);
 
-                // borrar SOLO ese campo
-                delete req.body[field];
+				expect(statusStub.calledWith(400)).to.be.true;
 
-                await registerUser(req, res);
+				const response = jsonStub.firstCall.args[0];
+				expect(response.missing).to.include(field);
+			});
+		});
 
-                expect(statusStub.calledWith(400)).to.be.true;
-
-                const response = jsonStub.firstCall.args[0];
-                expect(response.missing).to.include(field);
-            });
-        });
-
-    });
+	});
 
 
-    describe("loginUser", () => {
+	describe("loginUser", () => {
 
-        let req: any;
-        let res: any;
-        let jsonStub: any;
-        let statusStub: any;
-        let fakeRepo: any;
+		let req: any;
+		let res: any;
+		let jsonStub: any;
+		let statusStub: any;
+		let fakeRepo: any;
 
-        //Declarar los stubs
-        let hashStub: sinon.SinonStub
-        let findOneStub: sinon.SinonStub
-        let saveStub: sinon.SinonStub
-        let createStub: sinon.SinonStub
-
-        //los prints
-        let consoleLogStub: sinon.SinonStub;
-        let consoleErrorStub: sinon.SinonStub;
-        let consoleWarnStub: sinon.SinonStub;
+		// Declarar los stubs (use fakeRepo methods directly)
 
 
-        beforeEach(() => {
-            req = {};
-            jsonStub = sinon.stub();
-            statusStub = sinon.stub().returns({ json: jsonStub });
+		beforeEach(() => {
+			req = {};
+			jsonStub = sinon.stub();
+			statusStub = sinon.stub().returns({ json: jsonStub });
 
-            consoleLogStub = sinon.stub(console, "log");
-            consoleErrorStub = sinon.stub(console, "error");
-            consoleWarnStub = sinon.stub(console, "warn");
+			sinon.stub(console, "log");
+			sinon.stub(console, "error");
+			sinon.stub(console, "warn");
 
-            res = {
-                status: statusStub
-            };
+			res = {
+				status: statusStub
+			};
 
-            fakeRepo = {
-                findOne: sinon.stub(),
-                save: sinon.stub(),
-                create: sinon.stub()
-            }
+			fakeRepo = {
+				findOne: sinon.stub(),
+				save: sinon.stub(),
+				create: sinon.stub()
+			};
 
-            sinon.stub(Database.getInstance(), "getRepository").returns(fakeRepo)
+			sinon.stub(Database.getInstance(), "getRepository").returns(fakeRepo);
 
-            findOneStub = fakeRepo.findOne;
-            saveStub = fakeRepo.save;
-            createStub = fakeRepo.create
+			// access fakeRepo methods directly when needed
+			// createStub not needed directly
 
-            sinon.stub(bcrypt, "hash").resolves("hashed123");
-        });
+			sinon.stub(bcrypt, "hash").resolves("hashed123");
+		});
 
-        afterEach(() => {
-            sinon.restore();
-        });
+		afterEach(() => {
+			sinon.restore();
+		});
 
-        it("should return 400 if 'email' is missing", async () => {
-            const req: any = {
-                body: {
-                    password: "123"
-                }
-            };
-            const jsonStub = sinon.stub();
-            const statusStub = sinon.stub().returns({ json: jsonStub });
-            const res: any = {
-                status: statusStub
-            };
-            await loginUser(req, res);
+		it("should return 400 if 'email' is missing", async () => {
+			req.body = { password: "123" };
+			await loginUser(req, res);
 
-            expect(statusStub.calledWith(400)).to.be.true;
-            const response = jsonStub.firstCall.args[0];
-            expect(response.message).to.equal("Missing required field: email");
-        });
+			expect(statusStub.calledWith(400)).to.be.true;
+			const response = jsonStub.firstCall.args[0];
+			expect(response.message).to.equal("Missing required field: email");
+		});
 
-        it("should return 400 if 'password' is missing", async () => {
-            const req: any = {
-                body: {
-                    email: "juan@perez.com"
-                }
-            };
-            const jsonStub = sinon.stub();
-            const statusStub = sinon.stub().returns({ json: jsonStub });
-            const res: any = {
-                status: statusStub
-            };
-            await loginUser(req, res);
+		it("should return 400 if 'password' is missing", async () => {
+			req.body = { email: "juan@perez.com" };
+			await loginUser(req, res);
 
-            expect(statusStub.calledWith(400)).to.be.true;
-            const response = jsonStub.firstCall.args[0];
-            expect(response.message).to.equal("Missing required field: password");
-        });
+			expect(statusStub.calledWith(400)).to.be.true;
+			const response = jsonStub.firstCall.args[0];
+			expect(response.message).to.equal("Missing required field: password");
+		});
 
-        it("should return 404 if user email not found", async () => {
-            const req: any = {
-                body: {
-                    email: "pepe@perez.com",
-                    password: "123"
-                }
-            };
-            const jsonStub = sinon.stub();
-            const statusStub = sinon.stub().returns({ json: jsonStub });
-            const res: any = {
-                status: statusStub
-            };
-            
-            fakeRepo.findOne.resolves(null);
+		it("should return 404 if user email not found", async () => {
+			req.body = { email: "pepe@perez.com", password: "123" };
 
-            await loginUser(req, res);
-            
-            expect(statusStub.calledWith(404)).to.be.true;
+			fakeRepo.findOne.resolves(null);
 
-            const response = jsonStub.firstCall.args[0];
-            expect(response.message).to.equal("Invalid email");
-            
-        });
+			await loginUser(req, res);
 
-        it("should return 401 if password is incorrect", async () => {
-            const req: any = {
-                body: {
-                    email: "pepe@perez.com",
-                    password: "123"
-                }
-            };
-            const jsonStub = sinon.stub();
-            const statusStub = sinon.stub().returns({ json: jsonStub });
-            const res: any = {
-                status: statusStub
-            };
-            
-            sinon.stub(bcrypt, "compare").resolves(false);
+			expect(statusStub.calledWith(404)).to.be.true;
 
-            await loginUser(req, res);
-            
-            expect(statusStub.calledWith(404)).to.be.true;
+			const response = jsonStub.firstCall.args[0];
+			expect(response.message).to.equal("Invalid email");
 
-            const response = jsonStub.firstCall.args[0];
-            expect(response.message).to.equal("Invalid email");
-        });
+		});
 
-        it("should return 500 on internal server error", async () => {
-            const req: any = {
-                body: {
-                    email: "pedro@pecas.com",
-                    password: "123"
-                }
-            };
-            const jsonStub = sinon.stub();
-            const statusStub = sinon.stub().returns({ json: jsonStub });
-            const res: any = {
-                status: statusStub
-            };
-            fakeRepo.findOne.throws(new Error("DB error"));
+		it("should return 401 if password is incorrect", async () => {
+			req.body = { email: "pepe@perez.com", password: "123" };
 
-            await loginUser(req, res);
-            expect(statusStub.calledWith(500)).to.be.true;
+			sinon.stub(bcrypt, "compare").resolves(false);
 
-            const response = jsonStub.firstCall.args[0];
-            expect(response.message).to.equal("Internal server error");
-        });
-    })
+			await loginUser(req, res);
+
+			expect(statusStub.calledWith(404)).to.be.true;
+
+			const response = jsonStub.firstCall.args[0];
+			expect(response.message).to.equal("Invalid email");
+		});
+
+		it("should return 500 on internal server error", async () => {
+			req.body = { email: "pedro@pecas.com", password: "123" };
+			fakeRepo.findOne.throws(new Error("DB error"));
+
+			await loginUser(req, res);
+			expect(statusStub.calledWith(500)).to.be.true;
+
+			const response = jsonStub.firstCall.args[0];
+			expect(response.message).to.equal("Internal server error");
+		});
+	});
 });

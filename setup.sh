@@ -39,6 +39,10 @@ npm install
 echo "Verificando o creando base de datos..."
 npm run setup-db
 
+# 7.1) Ejecutar tests del Backend
+echo "Ejecutando tests del Backend..."
+npm test || { echo "Tests del backend fallaron"; exit 1; }
+
 # 8) Volver a la raiz relativa del repo
 cd ../.. || true
 

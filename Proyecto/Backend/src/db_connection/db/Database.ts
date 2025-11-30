@@ -5,7 +5,10 @@ import { appDataSource } from "../config/dataSource";
 class Database {
 	private static instance: DataSource | null = null;
 
-	private constructor() {}
+	private constructor() {
+		// Prevent direct instantiation; Database is a singleton
+		void 0;
+	}
 
 	static getInstance(): DataSource {
 		if (!Database.instance) {

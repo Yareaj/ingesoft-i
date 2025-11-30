@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 import * as path from "path";
 import { getFirstUser, registerUser, loginUser, upload } from "./db_connection/controller/UserController";
 import { verifyGoogleToken, exchangeCodeForToken } from './db_connection/controller/AuthController';
-import { saveTraining, getUserTrainings, calculateTraining, replaceGhost } from "./db_connection/controller/TrainingController";
+import { saveTraining, getUserTrainings, calculateTraining, replaceGhost, deleteTraining } from "./db_connection/controller/TrainingController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -23,7 +23,10 @@ Database.initialize()
 
 		// Middlewares
 		app.use(cors());
-		app.use(express.json());
+		// Increase JSON and URL-encoded body size limits to allow image uploads (base64)
+		// Default is ~100kb; snapshots/base64 images may exceed that.
+		app.use(express.json({ limit: '10mb' }));
+		app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 		// Serve static images
 		app.use('/images', express.static(path.join(__dirname, '../../Database/db_images')));
@@ -44,6 +47,7 @@ Database.initialize()
 		app.post("/api/trainings", saveTraining);
 		app.post("/api/trainings/replace-ghost", replaceGhost);
 		app.get("/api/trainings/:userEmail", getUserTrainings);
+		app.delete('/api/trainings/:counter', deleteTraining);
 
 		app.listen(PORT, () => {
 			console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);

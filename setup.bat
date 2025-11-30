@@ -60,6 +60,15 @@ echo.
 echo  Verificando o creando base de datos...
 call npm run setup-db
 
+:: --- 7.1 Ejecutar tests del Backend ---
+echo.
+echo  Ejecutando tests del Backend...
+call npm test || (
+    echo  Tests del backend fallaron. Revisa la salida.
+    pause
+    exit /b
+)
+
 :: --- 8. Volver al directorio raíz ---
 cd ..\..
 

@@ -37,7 +37,7 @@ export const calculateTrainingStats = (
 			elevationGain: 0
 		};
 	}
-	
+
 	const distances = calculateDistances(coordinates);
 
 	const totalDistance = calculateTotalDistance(distances);
@@ -82,34 +82,34 @@ export const formatDuration = (seconds: number): string => {
 };
 
 export const calculateRithm = (avgSpeed: number): number => {
-	if (avgSpeed === 0) return 0;
-	return (60/avgSpeed);
-}
+	if (avgSpeed === 0) {return 0;}
+	return (60 / avgSpeed);
+};
 
 export const calculateMaxSpeed = (speeds: number[]): number => {
-	if (speeds.length === 0) return 0;
+	if (speeds.length === 0) {return 0;}
 	return Math.max(...speeds);
-}
+};
 
 export const calculateAvgSpeed = (totalDistance: number, totalSeconds: number): number => {
-	if (totalSeconds === 0) return 0;
+	if (totalSeconds === 0) {return 0;}
 	return (totalDistance / totalSeconds) * 3600;
-}
+};
 
 export const calculateTotalDistance = (distances: number[]): number => {
-	if (distances.length === 0) return 0;
+	if (distances.length === 0) {return 0;}
 
 	let totalDistance = 0;
 	for (const distance of distances) {
 		totalDistance += distance;
 	}
 	return totalDistance;
-}
+};
 
 /**
  * Calcula velocidades entre coordenadas
  */
-export const calculateSpeeds = (coordinates: Coordinate[], distances: number[]):  number[]  => {
+export const calculateSpeeds = (coordinates: Coordinate[], distances: number[]): number[] => {
 	const speeds: number[] = [];
 
 	for (let i = 1; i < coordinates.length; i++) {
@@ -129,11 +129,11 @@ export const calculateSpeeds = (coordinates: Coordinate[], distances: number[]):
 };
 
 /**
- * Calcula las distancias por segmento 
+ * Calcula las distancias por segmento
  */
 
 export const calculateDistances = (coordinates: Coordinate[]): number[] => {
-	let distances: number[] = [];
+	const distances: number[] = [];
 	for (let i = 1; i < coordinates.length; i++) {
 		const prev = coordinates[i - 1];
 		const curr = coordinates[i];
@@ -187,10 +187,10 @@ export const calculateCalories = (avgSpeed: number, userWeight: number, timeInHo
 		{ maxSpeed: 12, met: 10 },
 		{ maxSpeed: Infinity, met: 12 }
 	];
-	
-	const range = metRanges.find(range => avgSpeed < range.maxSpeed);
-	const metValue = range ? range.met : 12;
-	
+
+	const foundRange = metRanges.find(r => avgSpeed < r.maxSpeed);
+	const metValue = foundRange ? foundRange.met : 12;
+
 	return metValue * userWeight * timeInHours;
 };
 

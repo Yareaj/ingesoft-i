@@ -57,7 +57,13 @@ export default function HomeScreen() {
 	};
 
 	const handleNewTraining = () => {
-		navigation.navigate('Training' as never);
+		// Pass current location to Training screen so it can center immediately
+		if (location) {
+			const typedNav = navigation as { navigate: (name: string, params?: any) => void };
+			typedNav.navigate('Training', { initialLocation:{ latitude: location.coords.latitude, longitude: location.coords.longitude }});
+		} else {
+			navigation.navigate('Training' as never);
+		}
 	};
 
 	const handleRecordGhost = () => {
@@ -86,7 +92,10 @@ export default function HomeScreen() {
 		typedNav.navigate('Training', { isGhost: true, ghostDistanceKm: distance });
 	};
 	const handleSavedRoutes = () => Alert.alert('Saved Routes', 'Opening saved routes...');
-	const handleTrainingHistory = () => Alert.alert('Training History', 'Opening training history...');
+	const handleTrainingHistory = () => {
+		const typedNav = navigation as { navigate: (name: string, params?: any) => void };
+		typedNav.navigate('History');
+	};
 
 	return (
 		<SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
