@@ -71,12 +71,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const getNativeClientId = () => {
 		if (Platform.OS === "ios") {
-			return iosClientId || expoClientId;
+			return {
+				id: iosClientId || expoClientId,
+				os: "ios"
+			};
 		}
+
 		if (Platform.OS === "android") {
-			return androidClientId || expoClientId;
+			return {
+				id: androidClientId || expoClientId,
+				os: "android"
+			};
 		}
-		return expoClientId || iosClientId || androidClientId || null;
+
+		return {
+			id: expoClientId,
+			os: "web"
+		};
 	};
 
 	const processAuthRedirect = async (url: string) => {
@@ -161,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		codeVerifierRef.current = codeVerifier;
 		const codeChallenge = await sha256base64url(codeVerifier);
 
-		const clientId = getNativeClientId();
+		const { id: clientId, os } = getNativeClientId();
 		if (!clientId) {
 			console.error("No native Google Client ID configured.");
 			return;
