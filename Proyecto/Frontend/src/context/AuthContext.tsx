@@ -71,12 +71,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const getNativeClientId = () => {
 		if (Platform.OS === "ios") {
-			return iosClientId || expoClientId;
+			return {
+				id: iosClientId || expoClientId,
+				os: "ios"
+			};
 		}
+
 		if (Platform.OS === "android") {
-			return androidClientId || expoClientId;
+			return {
+				id: androidClientId || expoClientId,
+				os: "android"
+			};
 		}
-		return expoClientId || iosClientId || androidClientId || null;
+
+		return {
+			id: expoClientId,
+			os: "web"
+		};
+	};
+
+	const buildNativeRedirectUri = (clientId: string | undefined | null, os: string) => {
+		if (!clientId) {
+			return null;
+		};
+		// Google native redirect URIs use the scheme: com.googleusercontent.apps.<CLIENT_ID_PREFIX>:/oauthredirect
+		// Client IDs usually end with ".apps.googleusercontent.com"; strip that if present.
+		let prefix = clientId;
+		if (prefix.endsWith('.apps.googleusercontent.com')) {
+			prefix = prefix.replace(/\.apps\.googleusercontent\.com$/, '');
+		}
+		// For Android/iOS native apps use the same scheme
+		if (os === 'android' || os === 'ios') {
+			return `com.googleusercontent.apps.${prefix}:/oauthredirect`;
+		}
+		// Fallback: return null so caller can decide alternative redirect
+		return null;
 	};
 
 	const processAuthRedirect = async (url: string) => {
@@ -161,15 +190,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		codeVerifierRef.current = codeVerifier;
 		const codeChallenge = await sha256base64url(codeVerifier);
 
-		const clientId = getNativeClientId();
+		const { id: clientId, os } = getNativeClientId();
 		if (!clientId) {
 			console.error("No native Google Client ID configured.");
 			return;
 		}
 
-		// TODO: parse an automatic oauth redirect for android clients, temporarily using the ios one
-		const redirectUri = "com.googleusercontent.apps.989383413728-qihtmberuo47voq2ccl77fkq1iaobi28:/oauthredirect";
-		console.log("Using redirectUri:", redirectUri);
+		const redirectUri = buildNativeRedirectUri(clientId, os) || (() => {
+			const fallback = clientId.endsWith('.apps.googleusercontent.com')
+				? clientId.replace(/\.apps\.googleusercontent\.com$/, '')
+				: clientId;
+			return `com.googleusercontent.apps.${fallback}:/oauthredirect`;
+		})();
+		console.log("Using redirectUri:", redirectUri, "(platform:", os, ")");
 
 		const scope = "openid profile email";
 
