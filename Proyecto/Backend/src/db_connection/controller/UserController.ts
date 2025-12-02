@@ -49,17 +49,17 @@ export const registerUser = async (req: Request, res: Response) => {
 			.map(([key]) => key);
 
 		if (missingFields.length > 0) {
-			const warnMsg = `⚠️  Missing requierd fields: ${missingFields}`;
-			console.warn(warnMsg);
-			return res.status(409).json({ message: warnMsg });
+			// Return structured missing fields to help client/tests identify which are missing
+			console.warn(`⚠️  Missing required fields: ${missingFields.join(',')}`);
+			return res.status(400).json({ message: "Missing required fields", missing: missingFields });
 		}
 
 		// Verify username uniqueness (avoid duplicate usernames)
-		const existingByUsername = await userRepository.findOne({ where: { username } });
+		const existingByUsername = await userRepository.findOne({ where: { username }});
 		if (existingByUsername) {
 			const warnMsg = `⚠️  Username already taken: ${username}`;
 			console.warn(warnMsg);
-			return res.status(409).json({ message: warnMsg });
+			return res.status(400).json({ message: warnMsg });
 		}
 
 		// Get profile photo path if uploaded
