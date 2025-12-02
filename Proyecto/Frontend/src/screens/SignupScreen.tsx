@@ -46,9 +46,19 @@ const signupScreen = ({ onBack }: SignupScreenProps) => {
 		}
 	};
 
+	// Minimum eight characters, at least one uppercase, one lowercase, one number and one special character (allows most punctuation, no spaces)
+	const re = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])[^\s]{8,}$/;
+	function isSecurePassword(pwd: string) {
+		return re.test(pwd);
+	}
+
 	const handleSignup = async () => {
 		if (password !== confirmPassword) {
 			Alert.alert("Error", "Passwords do not match");
+			return;
+		}
+		if (!isSecurePassword(password)) {
+			Alert.alert("Error", "Password must be at least 8 characters long and include uppercase, lowercase, number, and a special character (no spaces).");
 			return;
 		}
 
@@ -83,7 +93,8 @@ const signupScreen = ({ onBack }: SignupScreenProps) => {
 
 			const data = await response.json();
 			if (!response.ok) {
-				throw new Error(data?.message || `Error ${response.status}`);
+				Alert.alert("Error", data?.message || `Error ${response.status}`);
+				return;
 			}
 			Alert.alert("Success", data.message || "Registration successful");
 			onBack();
